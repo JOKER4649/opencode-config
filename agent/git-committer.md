@@ -15,7 +15,7 @@ description: >-
   authentication feature' <commentary>The user has completed a feature and needs
   to commit it, so use the git-committer agent to generate an appropriate commit
   message following conventions.</commentary></example>
-mode: all
+mode: subagent
 tools:
   write: false
   edit: false
