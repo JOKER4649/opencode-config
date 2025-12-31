@@ -3,6 +3,78 @@
   // "model": "opencode/big-pickle",
   "model": "opencode/glm-4.7-free",
   // "small_model": "anthropic/claude-haiku-4-5",
+  "permission": {
+    "edit": "allow",
+    "bash": {
+      "git push": "ask"
+    }
+  },
+  "agent": {
+    "plan": {
+      "permission": {
+        "edit": "ask",
+        "bash": {
+          "git status": "allow",
+          "git diff": "allow",
+          "git log": "allow",
+          "git show": "allow",
+          "git branch": "allow",
+          "git tag": "allow",
+          "ls": "allow",
+          "pwd": "allow",
+          "cd": "allow",
+          "cat": "allow",
+          "head": "allow",
+          "tail": "allow",
+          "grep": "allow",
+          "rg": "allow",
+          "find": "allow",
+          "echo": "allow",
+          "test": "allow",
+          "[": "allow",
+          "curl": "allow",
+          "wc": "allow",
+          "sort": "allow",
+          "uniq": "allow",
+          "cut": "allow",
+          "which": "allow",
+          "type": "allow",
+          "file": "allow",
+          "stat": "allow",
+          "du": "allow",
+          "df": "allow",
+          "npm run dev": "allow",
+          "npm test": "allow",
+          "npm run build": "allow",
+          "python": "allow",
+          "node": "allow",
+          "npx": "allow",
+          "gh repo view": "allow",
+          "gh repo list": "allow",
+          "gh issue list": "allow",
+          "gh issue view": "allow",
+          "gh pr list": "allow",
+          "gh pr view": "allow",
+          "gh pr checks": "allow",
+          "gh release list": "allow",
+          "gh release view": "allow",
+          "gh run list": "allow",
+          "gh run view": "allow",
+          "gh auth status": "allow",
+          "gh api": "allow",
+          "*": "ask"
+        }
+      }
+    },
+    "build": {
+      "permission": {
+        "bash": {
+          "pkill *": "ask",
+          "*": "allow"
+        }
+      }
+    }
+  },
   "tools": {
     "github*": false
   },
@@ -31,10 +103,7 @@
     },
     "playwright": {
       "type": "local",
-      "command": [
-        "npx",
-        "@playwright/mcp@latest"
-      ],
+      "command": ["npx", "@playwright/mcp@latest"],
       "enabled": true
     }
   }
