@@ -1,0 +1,37 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+  "auto_update": false,
+  "sisyphus_agent": {
+    "planner_enabled": true
+  },
+  "agents": {
+    // 主模型
+    "Sisyphus": {
+      "model": "github-copilot/claude-sonnet-4.5"
+    },
+    // 負責第二意見 (應與主模型不同)
+    "oracle": {
+      "model": "github-copilot/gpt-5.1-codex-max"
+    },
+    // 負責程式碼、文件分析
+    "librarian": {
+      // "model": "github-copilot/gemini-3-flash-preview"
+    },
+    // 負責搜尋 (基於網路)
+    "explore": {
+      "model": "github-copilot/grok-code-fast-1"
+    },
+    // 負責前端 UI/UX 設計
+    "frontend-ui-ux-engineer": {
+      "model": "github-copilot/gemini-3-pro-preview"
+    },
+    // 負責文件撰寫 (gemini flash 不錯, 但要錢)
+    "document-writer": {
+      "model": "opencode/big-pickle"
+    },
+    // 負責視覺理解
+    "multimodal-looker": {
+      "model": "github-copilot/gemini-3-flash-preview"
+    }
+  }
+}
