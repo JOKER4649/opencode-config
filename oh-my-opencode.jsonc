@@ -15,6 +15,7 @@
     },
     // 負責程式碼、文件分析
     "librarian": {
+      "model": "opencode/minimax-m2.1-free"
       // "model": "github-copilot/gemini-3-flash-preview"
     },
     // 負責搜尋 (基於網路)
@@ -23,11 +24,12 @@
     },
     // 負責前端 UI/UX 設計
     "frontend-ui-ux-engineer": {
-      "model": "github-copilot/gemini-3-pro-preview"
+      // "model": "github-copilot/gemini-3-pro-preview" // gemini 3 pro 要錢
+      "model": "github-copilot/oswe-vscode-prime"
     },
     // 負責文件撰寫 (gemini flash 不錯, 但要錢)
     "document-writer": {
-      "model": "opencode/big-pickle"
+      "model": "opencode/glm-4.7-free"
     },
     // 負責視覺理解
     "multimodal-looker": {
