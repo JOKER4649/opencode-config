@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
-  "auto_update": false,
+  "auto_update": true,
   "sisyphus_agent": {
     "planner_enabled": true
   },
@@ -11,7 +11,7 @@
     },
     // 負責第二意見 (應與主模型不同)
     "oracle": {
-      "model": "github-copilot/gpt-5.1-codex-max"
+      "model": "github-copilot/gpt-5.2"
     },
     // 負責程式碼、文件分析
     "librarian": {
@@ -24,8 +24,8 @@
     },
     // 負責前端 UI/UX 設計
     "frontend-ui-ux-engineer": {
-      // "model": "github-copilot/gemini-3-pro-preview" // gemini 3 pro 要錢
-      "model": "github-copilot/oswe-vscode-prime"
+      "model": "github-copilot/gemini-3-pro-preview" // gemini 3 pro 要錢
+      // "model": "github-copilot/oswe-vscode-prime" // 免費但較差一點
     },
     // 負責文件撰寫 (gemini flash 不錯, 但要錢)
     "document-writer": {

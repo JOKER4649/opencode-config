@@ -2,7 +2,7 @@
   "plugin": ["oh-my-opencode"],
   "$schema": "https://opencode.ai/config.json",
   // "model": "opencode/big-pickle",
-  "model": "github-copilot/claude-sonnet-4.5",
+  "model": "github-copilot/claude-opus-4.5",
   // "small_model": "github-copilot/oswe-vscode-prime", // 可選的小模型
   "permission": {
     "bash": {
