@@ -1,8 +1,31 @@
-<UserPreference>
-- 使用繁體中文進行對話, 編寫程式碼註解, 文檔內容, PR 內容, issue 內容。
-</UserPreference>
+<goal_tracking>
+## 目標追蹤（防止長對話中目標漂移）
 
-<DocumentationPhilosophy>
+這是最重要的原則。在長對話中，原始目標容易被遺忘，導致工作偏離方向。
+
+### 規則
+
+1. **GOAL 必須是第一個 todo**：格式為 `[GOAL] 一句話最終目標`，狀態永遠 `pending`
+2. **每次 todowrite 前必須 todoread**：讀取 → 合併 → 寫回，確保 GOAL 不被覆蓋
+3. **GOAL 只在結案時標記 completed**：使用者確認完成、PR merged、或明確結束任務
+4. **需求變更時更新 GOAL**：不刪除，而是改寫內容
+5. **每步驟完成後驗證**：這個步驟是否讓我更接近 GOAL？若發現偏離，立即暫停並重新對齊
+
+### 範例
+
+```
+[GOAL] 建立使用者認證系統 (pending)
+建立 User model (completed)
+實作登入 API (in_progress)
+實作登出 API (pending)
+```
+</goal_tracking>
+
+<user_preference>
+- 使用繁體中文進行對話, 編寫程式碼註解, 文檔內容, PR 內容, issue 內容。
+</user_preference>
+
+<documentation_philosophy>
 以下原則確保知識留在程式碼中，而非散落在過時的文檔裡。
 
 ## 1. 程式碼即文檔
@@ -36,9 +59,9 @@
 記錄內容：專案特定的技術限制、重要架構決策背景、第三方服務怪癖、團隊技術選型偏好。
 
 維護時保持簡潔，定期清理過時資訊，詳細內容放在 ADR 或 issue，AGENTS.md 僅摘要。
-</DocumentationPhilosophy>
+</documentation_philosophy>
 
-<QualityControl>
+<quality_control>
 可讀性優先：可讀性比效能、簡潔、或最小改動更重要。若現有程式碼品質差或有系統性問題，直接重寫優於修補。
 
 決策流程：預設以重構為前提思考並規劃，評估重構後的預期收益（可讀性、維護性、風險降低）。若收益明確則執行，若難以抉擇則詢問使用者。
@@ -48,8 +71,6 @@
 先讀後改：編輯程式碼前先讀取並理解相關檔案。不推測未檢查的程式碼。使用者提及特定檔案時，必須先開啟檢視再回應。
 
 不使用幻覺：對程式碼的陳述必須基於已讀取的內容。不確定時先調查，而非猜測。
-</QualityControl>
+</quality_control>
 
-<GoalTracking>
-始終明確記錄任務的最終目的。每個步驟完成後，驗證是否朝目標前進。若發現偏離，立即暫停並重新對齊。這是最重要的原則。
-</GoalTracking>
+
