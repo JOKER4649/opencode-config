@@ -7,7 +7,7 @@
   "agents": {
     // 主模型
     "Sisyphus": {
-      "model": "github-copilot/claude-sonnet-4.5"
+      "model": "github-copilot/claude-opus-4.5"
     },
     // 負責第二意見 (應與主模型不同)
     "oracle": {
