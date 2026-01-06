@@ -14,7 +14,8 @@
     "plan": {
       "permission": {
         "edit": "ask",
-        "bash": "allow"
+        "bash": "allow",
+        "*": "allow"
       }
     },
     "build": {}
@@ -44,12 +45,13 @@
       "environment": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "YOUR_GITHUB_PAT"
       }
-    },
-    "playwright": {
-      "enabled": true,
-      "type": "local",
-      "command": ["npx", "@playwright/mcp@latest"]
     }
+    // oh-my-opencode 已內建
+    // "playwright": {
+    //   "enabled": true,
+    //   "type": "local",
+    //   "command": ["npx", "@playwright/mcp@latest"]
+    // }
   },
   "keybinds": {
     // alt+enter 提交輸入，enter 換行
