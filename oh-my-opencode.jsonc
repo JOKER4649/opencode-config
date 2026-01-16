@@ -4,6 +4,7 @@
   "sisyphus_agent": {
     "planner_enabled": true
   },
+  // https://github.com/code-yeongyu/oh-my-opencode#agents-your-teammates
   "agents": {
     // 主模型
     "Sisyphus": {
@@ -15,12 +16,15 @@
     },
     // 負責程式碼、文件分析
     "librarian": {
-      "model": "opencode/minimax-m2.1-free"
+      // "model": "opencode/glm-4.7-free"
+      // "model": "opencode/minimax-m2.1-free"
       // "model": "github-copilot/gemini-3-flash-preview"
+      "model": "google/gemini-3-flash-preview"
     },
     // 負責搜尋 (基於網路)
     "explore": {
-      "model": "github-copilot/grok-code-fast-1"
+      "model": "google/gemini-3-flash-preview"
+      // "model": "github-copilot/grok-code-fast-1"
     },
     // 負責前端 UI/UX 設計
     "frontend-ui-ux-engineer": {
@@ -29,11 +33,13 @@
     },
     // 負責文件撰寫 (gemini flash 不錯, 但要錢)
     "document-writer": {
-      "model": "opencode/glm-4.7-free"
+      // "model": "opencode/glm-4.7-free"
+      "model": "google/gemini-3-flash-preview"
     },
     // 負責視覺理解
     "multimodal-looker": {
-      "model": "github-copilot/gemini-3-flash-preview"
+      "model": "google/gemini-3-flash-preview"
+      // "model": "github-copilot/gemini-3-flash-preview"
     }
   }
 }
