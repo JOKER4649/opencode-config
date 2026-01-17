@@ -1,55 +1,29 @@
 {
   "plugin": [
     "oh-my-opencode@beta",
-    "@plannotator/opencode",
-    "opencode-zellij-namer@latest"
+    //  "@plannotator/opencode" // 還不錯用, 但不直覺
   ],
   "$schema": "https://opencode.ai/config.json",
-  // "model": "opencode/big-pickle",
+  "model": "opencode/glm-4.7-free",
   // "model": "github-copilot/claude-opus-4.5",
   // "small_model": "github-copilot/oswe-vscode-prime", // 可選的小模型
   "permission": {
     "bash": {
       "rm *": "ask",
-      "pkill -f *": "deny"
-    }
+      "pkill -f *": "deny",
+    },
   },
   "agent": {
     "plan": {
       "permission": {
         "edit": "ask",
         "bash": "allow",
-        "*": "allow"
-      }
+        "*": "allow",
+      },
     },
-    "build": {}
   },
-  "tools": {
-    "github*": false
-  },
+  "tools": {},
   "mcp": {
-    // "github": {
-    //   "type": "remote",
-    //   "url": "https://api.githubcopilot.com/mcp/",
-    //   "enabled": false,
-    //   "oauth": {}
-    // }
-    "github": {
-      "enabled": false,
-      "type": "local",
-      "command": [
-        "docker",
-        "run",
-        "-i",
-        "--rm",
-        "-e",
-        "GITHUB_PERSONAL_ACCESS_TOKEN",
-        "ghcr.io/github/github-mcp-server"
-      ],
-      "environment": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "YOUR_GITHUB_PAT"
-      }
-    }
     // oh-my-opencode 已內建
     // "playwright": {
     //   "enabled": true,
@@ -61,5 +35,5 @@
     // alt+enter 提交輸入，enter 換行
     // "input_submit": "alt+return",
     // "input_newline": "return"
-  }
+  },
 }

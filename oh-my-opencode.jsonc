@@ -1,45 +1,44 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
   "auto_update": true,
-  "sisyphus_agent": {
-    "planner_enabled": true
-  },
+  "sisyphus_agent": {},
   // https://github.com/code-yeongyu/oh-my-opencode#agents-your-teammates
   "agents": {
     // 主模型
     "Sisyphus": {
-      "model": "github-copilot/claude-opus-4.5"
+      // "model": "google/gemini-3-flash-preview",
+      "model": "github-copilot/claude-opus-4.5",
     },
-    // 負責第二意見 (應與主模型不同)
+    // 負責第二意見 (應與主模型不同, 但思考能力強)
     "oracle": {
-      "model": "github-copilot/gpt-5.2"
+      "model": "github-copilot/gpt-5.2",
     },
     // 負責程式碼、文件分析
     "librarian": {
-      // "model": "opencode/glm-4.7-free"
+      "model": "opencode/glm-4.7-free",
       // "model": "opencode/minimax-m2.1-free"
       // "model": "github-copilot/gemini-3-flash-preview"
-      "model": "google/gemini-3-flash-preview"
+      // "model": "google/gemini-3-flash-preview",
     },
     // 負責搜尋 (基於網路)
     "explore": {
-      "model": "google/gemini-3-flash-preview"
+      "model": "google/gemini-3-flash-preview",
       // "model": "github-copilot/grok-code-fast-1"
     },
     // 負責前端 UI/UX 設計
     "frontend-ui-ux-engineer": {
-      "model": "github-copilot/gemini-3-pro-preview" // gemini 3 pro 要錢
-      // "model": "github-copilot/oswe-vscode-prime" // 免費但較差一點
+      // "model": "github-copilot/gemini-3-pro-preview", // gemini 3 pro 要錢
+      "model": "google/gemini-3-pro-preview",
     },
     // 負責文件撰寫 (gemini flash 不錯, 但要錢)
     "document-writer": {
       // "model": "opencode/glm-4.7-free"
-      "model": "google/gemini-3-flash-preview"
+      "model": "google/gemini-3-flash-preview",
     },
     // 負責視覺理解
     "multimodal-looker": {
-      "model": "google/gemini-3-flash-preview"
+      "model": "google/gemini-3-flash-preview",
       // "model": "github-copilot/gemini-3-flash-preview"
-    }
-  }
+    },
+  },
 }
