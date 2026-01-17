@@ -1,0 +1,5 @@
+[tools]
+bun = "latest"
+
+[tasks.kimaki]
+run = "bunx kimaki@latest"
