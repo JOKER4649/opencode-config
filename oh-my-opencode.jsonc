@@ -2,12 +2,15 @@
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
   "auto_update": true,
   "sisyphus_agent": {},
+  "disabled_agents": [
+    "oracle", // 目前以 gpt5.2 做為預設模型
+  ],
   // https://github.com/code-yeongyu/oh-my-opencode#agents-your-teammates
   "agents": {
     // 主模型
     "Sisyphus": {
-      // "model": "google/gemini-3-flash-preview",
-      "model": "github-copilot/claude-opus-4.5",
+      "model": "github-copilot/gpt-5.2-codex",
+      // "model": "github-copilot/claude-opus-4.5",
     },
     // 負責第二意見 (應與主模型不同, 但思考能力強)
     "oracle": {
