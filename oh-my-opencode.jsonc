@@ -1,47 +1,72 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
-  "auto_update": true,
-  "sisyphus_agent": {},
-  "disabled_agents": [
-    "oracle", // 目前以 gpt5.2 做為預設模型
-  ],
-  // https://github.com/code-yeongyu/oh-my-opencode#agents-your-teammates
+  "auto_update": false,
+  "sisyphus_agent": {
+    // "replace_plan": true,
+  },
+  "disabled_agents": [],
+  // https://github.com/code-yeongyu/oh-my-opencode/blob/dev/docs/features.md
   "agents": {
     // 主模型
     "Sisyphus": {
-      "model": "github-copilot/gpt-5.2-codex",
-      // "model": "github-copilot/claude-opus-4.5",
+      "model": "anthropic/claude-opus-4-5"
     },
     // 負責第二意見 (應與主模型不同, 但思考能力強)
     "oracle": {
-      "model": "github-copilot/gpt-5.2",
+      "model": "github-copilot/gpt-5.2-codex"
     },
     // 負責程式碼、文件分析
     "librarian": {
-      "model": "opencode/glm-4.7-free",
-      // "model": "opencode/minimax-m2.1-free"
+      // "model": "opencode/glm-4.7-free",
+      // "model": "zai-coding-plan/glm-4.7",
+      "model": "anthropic/claude-haiku-4-5"
       // "model": "github-copilot/gemini-3-flash-preview"
       // "model": "google/gemini-3-flash-preview",
     },
     // 負責搜尋 (基於網路)
     "explore": {
-      "model": "google/gemini-3-flash-preview",
-      // "model": "github-copilot/grok-code-fast-1"
+      "model": "github-copilot/grok-code-fast-1"
     },
     // 負責前端 UI/UX 設計
     "frontend-ui-ux-engineer": {
       // "model": "github-copilot/gemini-3-pro-preview", // gemini 3 pro 要錢
-      "model": "google/gemini-3-pro-preview",
+      "model": "google/gemini-3-pro-preview"
     },
     // 負責文件撰寫 (gemini flash 不錯, 但要錢)
     "document-writer": {
-      // "model": "opencode/glm-4.7-free"
-      "model": "google/gemini-3-flash-preview",
+      "model": "google/gemini-3-flash-preview"
     },
     // 負責視覺理解
     "multimodal-looker": {
-      "model": "google/gemini-3-flash-preview",
+      "model": "google/gemini-3-flash-preview"
       // "model": "github-copilot/gemini-3-flash-preview"
     },
+    // =====================
+    // v3
+    "Prometheus (Planner)": {
+      "model": "anthropic/cladue-sonnet-4.5"
+    },
+    "Metisr": {
+      "model": "anthropic/claude-sonnet-4.5"
+    },
+    "Momus": {
+      "model": "anthropic/claude-sonnet-4.5"
+    },
+    "OpenCode-Builder": {
+      "model": "anthropic/claude-sonnet-4.5"
+    }
   },
+  "background_task": {
+    "defaultConcurrency": 5,
+    "providerConcurrency": {
+      "anthropic": 3,
+      "openai": 5,
+      "google": 10
+    },
+    "modelConcurrency": {
+      "anthropic/claude-opus-4-5": 2,
+      "google/gemini-3-flash": 10,
+      "zai-coding-plan/glm-4.7": 1
+    }
+  }
 }
