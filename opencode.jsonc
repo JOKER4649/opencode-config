@@ -45,4 +45,11 @@
     // "input_submit": "alt+return",
     // "input_newline": "return"
   },
+  "tui": {
+    "scroll_speed": 3,
+    // 類似 macOS 的平滑滾動
+    "scroll_acceleration": {
+      "enabled": true
+    }
+  }
 }
