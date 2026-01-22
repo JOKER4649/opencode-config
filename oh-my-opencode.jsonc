@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
   "auto_update": false,
   "sisyphus_agent": {
-    // "replace_plan": true,
+    // "replace_plan": true
   },
   "disabled_agents": [],
   // https://github.com/code-yeongyu/oh-my-opencode/blob/dev/docs/features.md
@@ -18,13 +18,13 @@
     // 負責程式碼、文件分析
     "librarian": {
       // "model": "opencode/glm-4.7-free",
-      // "model": "zai-coding-plan/glm-4.7",
-      "model": "anthropic/claude-haiku-4-5"
+      "model": "zai-coding-plan/glm-4.7"
       // "model": "github-copilot/gemini-3-flash-preview"
       // "model": "google/gemini-3-flash-preview",
     },
     // 負責搜尋 (基於網路)
     "explore": {
+      // "model": "anthropic/claude-haiku-4-5"
       "model": "github-copilot/grok-code-fast-1"
     },
     // 負責前端 UI/UX 設計
@@ -32,7 +32,7 @@
       // "model": "github-copilot/gemini-3-pro-preview", // gemini 3 pro 要錢
       "model": "google/gemini-3-pro-preview"
     },
-    // 負責文件撰寫 (gemini flash 不錯, 但要錢)
+    // 負責文件撰寫
     "document-writer": {
       "model": "google/gemini-3-flash-preview"
     },
@@ -43,16 +43,17 @@
     },
     // =====================
     // v3
+    // =====================
+    // 具有訪談模式的策略規劃器。透過反覆提問，制定詳細的工作計畫。
     "Prometheus (Planner)": {
-      "model": "anthropic/cladue-sonnet-4.5"
+      "model": "anthropic/cladue-opus-4.5"
     },
+    // 規劃顧問－前期規劃分析。識別隱藏意圖、模糊之處和人工智慧失效點。
     "Metisr": {
       "model": "anthropic/claude-sonnet-4.5"
     },
+    // 方案審核員 - 根據清晰度、可驗證性和完整性標準驗證方案。
     "Momus": {
-      "model": "anthropic/claude-sonnet-4.5"
-    },
-    "OpenCode-Builder": {
       "model": "anthropic/claude-sonnet-4.5"
     }
   },
