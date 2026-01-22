@@ -22,7 +22,7 @@
       // "model": "github-copilot/gemini-3-flash-preview"
       // "model": "google/gemini-3-flash-preview",
     },
-    // 負責搜尋 (基於網路)
+    // 負責搜尋
     "explore": {
       // "model": "anthropic/claude-haiku-4-5"
       "model": "github-copilot/grok-code-fast-1"
