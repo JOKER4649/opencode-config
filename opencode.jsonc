@@ -1,12 +1,14 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
-    "oh-my-opencode@latest",
-    //  "@plannotator/opencode" // 還不錯用, 但不直覺
+    "oh-my-opencode@beta",
+    // "@plannotator/opencode@latest"
   ],
+  "autoupdate": true,
+  "default_agent": "plan",
   // "model": "opencode/glm-4.7-free",
-  // "model": "github-copilot/claude-opus-4.5",
-  "small_model": "github-copilot/oswe-vscode-prime", // 可選的小模型
+  "model": "anthropic/claude-sonnet-4-5",
+  "small_model": "zai-coding-plan/glm-4.7", // 可選的小模型
   "permission": {
     "bash": {
       // "rm *": "ask",
@@ -21,15 +23,22 @@
         "*": "allow",
       },
     },
+    "Planner-Sisyphus": {
+      "model": "zai-coding-plan/glm-4.7",
+      "permission": {
+        "edit": "ask",
+        "bash": "allow",
+        "*": "allow",
+      },
+    },
   },
-  "tools": {},
   "mcp": {
     // oh-my-opencode 已內建
     // "playwright": {
     //   "enabled": true,
     //   "type": "local",
-    //   "command": ["npx", "@playwright/mcp@latest"]
-    // }
+    //   "command": ["npx", "@playwright/mcp@latest"],
+    // },
   },
   "provider": {},
   "keybinds": {
