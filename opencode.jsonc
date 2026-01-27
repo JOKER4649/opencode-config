@@ -6,7 +6,7 @@
   ],
   "autoupdate": true,
   "default_agent": "plan",
-  "model": "zai-coding-plan/glm-4.7",
+  "model": "github-copilot/claude-opus-4-5",
   "small_model": "zai-coding-plan/glm-4.7", // 可選的小模型
   "permission": {
     "bash": {
