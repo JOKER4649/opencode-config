@@ -2,7 +2,8 @@
 name: github-flow
 description: >
   This skill should be used when the user asks to "create a PR",
-  "push code", "submit for review", "merge a PR", "ship it", "deploy",
+  "push code", "submit for review", "merge a PR", "ship it",
+  "建立 PR", "推送", "送 review", "合併", "提交功能", "部署",
   or when completing any code change that goes through the
   branch → PR → AI review → merge workflow.
   Covers GitHub Flow with Gemini Code Assist review handling
