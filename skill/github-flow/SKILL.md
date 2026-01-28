@@ -135,24 +135,27 @@ gh pr comment --body "/gemini review"
 
 ---
 
-## 階段 4：合併
+## 階段 4：回報並等待合併指示
 
-### 4.1 合併前檢查
+階段 3 完成後，回報 PR 狀態摘要並**停止**。合併是不可逆操作，必須由使用者明確同意。
 
-```bash
-gh pr checks                                           # CI 狀態
-gh pr view --json reviewDecision --jq '.reviewDecision' # Review 狀態
-```
+### 4.1 回報就緒狀態
 
-再次用 GraphQL 確認無未解決對話。所有條件滿足後執行合併：
+向使用者回報以下資訊：
+
+- PR URL
+- CI 狀態（`gh pr checks`）
+- Review 對話解決狀態
+- 是否有未處理的問題
+
+然後等待使用者指示。不要自行執行合併。
+
+### 4.2 執行合併（僅在使用者明確同意後）
+
+使用者同意後：
 
 ```bash
 gh pr merge --squash --delete-branch
-```
-
-### 4.2 清理本機
-
-```bash
 git checkout main && git pull origin main
 ```
 
