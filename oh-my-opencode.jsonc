@@ -42,7 +42,8 @@
       "variant": "medium"
     },
     "atlas": {
-      "model": "anthropic/claude-sonnet-4-5"
+      "model": "anthropic/claude-opus-4-5",
+      "variant": "max"
     }
   },
   "categories": {
@@ -92,6 +93,6 @@
     "provider": "agent-browser"
   },
   "comment_checker": {
-    "custom_prompt": "考慮這些註解欄位：`Intent`, `Reason`, `Constraints`, `Caveats`。皆為非必填，僅在程式行為、設計動機、使用限制或風險對理解有實質幫助時，才添加或修改。"
+    "custom_prompt": "考慮這些註解欄位：`Intent`, `Reason`, `Constraints`, `Caveats`。皆為非必填，僅在程式行為、設計動機、使用限制或風險對理解有實質幫助時，才添加或修改。如要刪除註解，請謹慎考慮。"
   }
 }
