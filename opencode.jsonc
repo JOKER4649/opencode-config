@@ -2,6 +2,7 @@
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
     "oh-my-opencode@latest",
+    // "opencode-anthropic-auth@latest",
     // "@plannotator/opencode@latest"
   ],
   "autoupdate": true,
@@ -22,11 +23,6 @@
         "*": "allow"
       }
     }
-    //    "faster": {
-    //      "description": "快速工作",
-    //      "model": "zai-code-plan/glm-4.7",
-    //      "prompt": "你是一個高效的助理，專注於快速完成任務，減少不必要的解釋和細節。如果非必要，不要調用 subagnets。",
-    //  }
   },
   "mcp": {
     // oh-my-opencode 已內建
