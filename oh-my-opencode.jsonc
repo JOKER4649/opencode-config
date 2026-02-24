@@ -1,81 +1,83 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
-  "auto_update": false,
   "sisyphus_agent": {
     "default_builder_enabled": false
   },
-  "disabled_hooks": [
-    "keyword-detector"
-  ],
   "agents": {
     "sisyphus": {
-      "model": "anthropic/claude-opus-4-5",
+      "model": "anthropic/claude-opus-4-6",
       "variant": "max"
     },
     "hephaestus": {
-      "model": "github-copilot/gpt-5.2-codex",
+      "model": "openai/gpt-5.3-codex",
       "variant": "medium"
     },
     "oracle": {
-      "model": "github-copilot/gpt-5.2",
+      "model": "openai/gpt-5.2",
       "variant": "high"
     },
     "librarian": {
-      "model": "zai-coding-plan/glm-4.7"
+      "model": "zai-coding-plan/glm-5"
     },
     "explore": {
       "model": "anthropic/claude-haiku-4-5"
     },
     "multimodal-looker": {
-      "model": "github-copilot/gemini-3-flash-preview"
+      "model": "google/gemini-3-flash-preview"
     },
     "prometheus": {
-      "model": "anthropic/claude-opus-4-5",
+      "model": "anthropic/claude-opus-4-6",
       "variant": "max"
     },
     "metis": {
-      "model": "anthropic/claude-opus-4-5",
+      "model": "anthropic/claude-opus-4-6",
       "variant": "max"
     },
     "momus": {
-      "model": "github-copilot/gpt-5.2",
+      "model": "openai/gpt-5.2",
       "variant": "medium"
     },
     "atlas": {
-      "model": "anthropic/claude-opus-4-5",
+      "model": "anthropic/claude-sonnet-4-6",
       "variant": "max"
     }
   },
   "categories": {
     "visual-engineering": {
-      "model": "github-copilot/gemini-3-pro-preview"
+      "model": "google/gemini-3-pro-preview",
+      "variant": "high"
     },
     "ultrabrain": {
-      "model": "github-copilot/gpt-5.2-codex",
+      "model": "openai/gpt-5.3-codex",
       "variant": "xhigh"
     },
     "deep": {
-      "model": "github-copilot/gpt-5.2-codex",
+      "model": "openai/gpt-5.3-codex",
       "variant": "medium"
     },
     "artistry": {
-      "model": "github-copilot/gemini-3-pro-preview",
-      "variant": "max"
+      "model": "google/gemini-3-pro-preview",
+      "variant": "high"
     },
     "quick": {
       "model": "anthropic/claude-haiku-4-5"
     },
     "unspecified-low": {
-      "model": "anthropic/claude-sonnet-4-5"
+      "model": "anthropic/claude-sonnet-4-6",
+      "variant": "max"
     },
     "unspecified-high": {
-      "model": "anthropic/claude-opus-4-5",
+      "model": "anthropic/claude-opus-4-6",
       "variant": "max"
     },
     "writing": {
-      "model": "github-copilot/gemini-3-flash-preview"
+      "model": "google/gemini-3-flash-preview"
     }
   },
+  "disabled_hooks": [
+    "keyword-detector",
+    "dev-browser"
+  ],
   "background_task": {
     "defaultConcurrency": 5,
     "providerConcurrency": {
@@ -85,8 +87,7 @@
     },
     "modelConcurrency": {
       "anthropic/claude-opus-4-5": 2,
-      "google/gemini-3-flash": 10,
-      "zai-coding-plan/glm-4.7": 1
+      "google/gemini-3-flash": 10
     }
   },
   "browser_automation_engine": {
