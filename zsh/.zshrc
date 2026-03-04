@@ -25,7 +25,7 @@ ZSH_THEME="robbyrussell"
 
 # Uncomment one of the following lines to change the auto-update behavior
 # zstyle ':omz:update' mode disabled  # disable automatic updates
-# zstyle ':omz:update' mode auto      # update automatically without asking
+zstyle ':omz:update' mode auto      # update automatically without asking
 # zstyle ':omz:update' mode reminder  # just remind me to update when it's time
 
 # Uncomment the following line to change how often to auto-update (in days).
@@ -41,7 +41,7 @@ ZSH_THEME="robbyrussell"
 # DISABLE_AUTO_TITLE="true"
 
 # Uncomment the following line to enable command auto-correction.
-# ENABLE_CORRECTION="true"
+ENABLE_CORRECTION="true"
 
 # Uncomment the following line to display red dots whilst waiting for completion.
 # You can also set it to another string to have that shown instead of the default red dots.
@@ -52,7 +52,7 @@ ZSH_THEME="robbyrussell"
 # Uncomment the following line if you want to disable marking untracked files
 # under VCS as dirty. This makes repository status check for large repositories
 # much, much faster.
-# DISABLE_UNTRACKED_FILES_DIRTY="true"
+DISABLE_UNTRACKED_FILES_DIRTY="true"
 
 # Uncomment the following line if you want to change the command execution time
 # stamp shown in the history command output.
@@ -65,12 +65,20 @@ ZSH_THEME="robbyrussell"
 # Would you like to use another custom folder than $ZSH/custom?
 # ZSH_CUSTOM=/path/to/new-custom-folder
 
+# command 歷史長度
+HISTSIZE=100000
+SAVEHIST=100000
+
 # Which plugins would you like to load?
 # Standard plugins can be found in $ZSH/plugins/
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git
+plugins=(
+  git
+  gitfast
+  sudo
+  history
 	zsh-autosuggestions zsh-syntax-highlighting fast-syntax-highlighting 
 )
 
@@ -119,9 +127,3 @@ export EDITOR="code --wait"
 # wait https://github.com/sst/opencode/issues/4702
 #alias oc="SHELL=/usr/bin/bash opencode"
 alias oc="systemd-run --scope --user -p MemoryMax=10G -p MemoryHigh=8G opencode"
-
-# cloudflare AI gateway for opencode
-#export CLOUDFLARE_ACCOUNT_ID=4a000942b411c4385f6c336788b7c4e7
-#export CLOUDFLARE_GATEWAY_ID=joker-work
-#export CLOUDFLARE_API_TOKEN=-nDvdkBhwvzTOxL2Zzy8yJqRFgy_gQLHWQOEeqjo
-
