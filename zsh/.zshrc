@@ -118,6 +118,9 @@ alias mr="mise run"
 
 eval "$(~/.local/bin/mise activate zsh)"
 
+# 關閉 github cli 的翻頁
+export GH_PAGER=cat
+
 if [[ -z "$OPENCODE" ]]; then
   eval "$(starship init zsh)"
 fi

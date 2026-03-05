@@ -30,3 +30,31 @@ To github.com:JOKER4649/myconfig.git
 [2026-03-05 02:00:01]    M opencode/AGENTS.md
 [2026-03-05 02:00:01]    M zsh/.zshrc
 [2026-03-05 02:00:01]    M zsh/.zshrc
+[main 657709d] backup: 2026-03-05 02:00:01 自動備份
+ 3 files changed, 38 insertions(+), 13 deletions(-)
+[2026-03-05 02:00:01] 已提交: backup: 2026-03-05 02:00:01 自動備份
+[2026-03-05 02:00:01] 已提交: backup: 2026-03-05 02:00:01 自動備份
+To github.com:JOKER4649/myconfig.git
+   203c28e..657709d  main -> main
+To github.com:JOKER4649/myconfig.git
+   203c28e..657709d  main -> main
+[2026-03-05 02:00:04] 已推送到 remote
+[2026-03-05 02:00:04] 已推送到 remote
+[2026-03-05 02:00:04] 備份完成
+[2026-03-05 02:00:04] 備份完成
+[2026-03-06 02:00:01] 開始備份 (repo: /home/joker/myconfig)
+[2026-03-06 02:00:01] 開始備份 (repo: /home/joker/myconfig)
+[2026-03-06 02:00:01] 偵測到變更：
+[2026-03-06 02:00:01] 偵測到變更：
+[2026-03-06 02:00:01]    M backup/backup.log
+[2026-03-06 02:00:01]    M backup/backup.log
+[2026-03-06 02:00:01]    M mise/config.toml
+[2026-03-06 02:00:01]    M mise/config.toml
+[2026-03-06 02:00:01]    M opencode/AGENTS.md
+[2026-03-06 02:00:01]    M opencode/AGENTS.md
+[2026-03-06 02:00:01]    M opencode/oh-my-opencode.jsonc
+[2026-03-06 02:00:01]    M opencode/oh-my-opencode.jsonc
+[2026-03-06 02:00:01]    M zsh/.zshrc
+[2026-03-06 02:00:01]    M zsh/.zshrc
+[2026-03-06 02:00:01]   ?? mise/tasks/
+[2026-03-06 02:00:01]   ?? mise/tasks/

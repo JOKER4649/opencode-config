@@ -65,7 +65,8 @@
       "variant": "max"
     },
     "writing": {
-      "model": "kimi-for-coding/k2p5"
+      "model": "kimi-for-coding/k2p5",
+      "prompt_append": "- **不**建立 git worktree"
     }
   },
   "disabled_hooks": [

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+#MISE description="📊 查看 opencode-web service 狀態"
+set -euo pipefail
+systemctl --user --no-pager status opencode-web.service 2>&1 || true
+echo ""
+echo "--- 記憶體用量 ---"
+systemctl --user show opencode-web.service --property=MemoryCurrent --property=MemoryMax 2>/dev/null || true

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#MISE description="🚀 啟動 opencode-web systemd service"
+set -euo pipefail
+systemctl --user daemon-reload
+systemctl --user start opencode-web.service
+systemctl --user --no-pager status opencode-web.service
+echo ""
+echo "✓ opencode-web 已啟動 → http://localhost:8080"

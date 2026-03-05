@@ -1,4 +1,5 @@
 <user_preference>
 - 語言: 程式碼**外**使用`繁體中文`, 程式碼**內**尊重專案慣例(預設簡體中文)
 - 程式碼: 可讀性 > 最小變更 > 可靠性 > 性能
+- git worktree **必須**建立在 `./.worktree/[plan_name]/` 中
 </user_preference>

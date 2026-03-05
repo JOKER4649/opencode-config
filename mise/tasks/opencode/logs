@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+#MISE description="📜 查看 opencode-web 最近日誌 (加 -f 可 follow)"
+set -euo pipefail
+journalctl --user -u opencode-web.service --no-pager -n 50 "$@"
