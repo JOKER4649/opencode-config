@@ -21,6 +21,7 @@ from typing import NamedTuple
 #   target: 系統上的目標路徑（支援 ~ 代表家目錄）
 # ============================================================
 
+
 class LinkEntry(NamedTuple):
     source: str
     target: str
@@ -28,9 +29,10 @@ class LinkEntry(NamedTuple):
 
 LINKS: list[LinkEntry] = [
     LinkEntry("zsh/.zshrc", "~/.zshrc"),
-    LinkEntry("opencode",   "~/.config/opencode"),
-    LinkEntry("mise",       "~/.config/mise"),
+    LinkEntry("opencode", "~/.config/opencode"),
+    LinkEntry("mise", "~/.config/mise"),
     LinkEntry("starship/starship.toml", "~/.config/starship.toml"),
+    LinkEntry("tmux/tmux.conf", "~/.config/tmux/tmux.conf"),
 ]
 
 # ============================================================

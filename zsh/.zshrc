@@ -127,9 +127,17 @@ fi
 
 export EDITOR="code --wait"
 
-# wait https://github.com/sst/opencode/issues/4702
-alias oc="SHELL=/usr/bin/bash opencode"
-# alias oc="systemd-run --scope --user -p MemoryMax=10G -p MemoryHigh=8G opencode"
+function oc() {
+  local port
+  while true; do
+    port=$(( RANDOM % 1000 + 4000 ))
+    [[ -z $(ss -tlnH sport = :$port) ]] && break
+  done
+  tmux new-session -s "oc-${port}" "opencode --port ${port}"
+}
+
+# 自訂 CLI 命令
+export PATH="$HOME/myconfig/commands:$PATH"
 
 # Added by LM Studio CLI tool (lms)
 export PATH="$PATH:/home/joker/.lmstudio/bin"

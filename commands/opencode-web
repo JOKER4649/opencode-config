@@ -1,0 +1,78 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# dependencies = ["typer"]
+# ///
+"""opencode-web systemd service 管理工具"""
+
+import subprocess
+import sys
+from typing import Annotated
+
+import typer
+
+SERVICE = "opencode-web.service"
+URL = "http://localhost:8080"
+
+app = typer.Typer(help="opencode-web systemd service 管理工具")
+
+
+def run(cmd: list[str], *, check: bool = True, capture: bool = False) -> subprocess.CompletedProcess:
+    return subprocess.run(cmd, check=check, capture_output=capture, text=True)
+
+
+@app.command()
+def start():
+    """啟動 service (含 daemon-reload)"""
+    run(["systemctl", "--user", "daemon-reload"])
+    run(["systemctl", "--user", "start", SERVICE])
+    run(["systemctl", "--user", "--no-pager", "status", SERVICE])
+    print(f"\n✓ opencode-web 已啟動 → {URL}")
+
+
+@app.command()
+def stop():
+    """停止 service"""
+    run(["systemctl", "--user", "stop", SERVICE])
+    print("✓ opencode-web 已停止")
+
+
+@app.command()
+def restart():
+    """重新啟動 service (含 daemon-reload)"""
+    run(["systemctl", "--user", "daemon-reload"])
+    run(["systemctl", "--user", "restart", SERVICE])
+    run(["systemctl", "--user", "--no-pager", "status", SERVICE])
+    print(f"\n✓ opencode-web 已重新啟動 → {URL}")
+
+
+@app.command()
+def logs(
+    follow: Annotated[bool, typer.Option("-f", "--follow", help="持續追蹤新日誌 (tail -f 模式)")] = False,
+    lines: Annotated[int, typer.Option("-n", "--lines", help="顯示最近 N 行")] = 50,
+):
+    """查看 service 日誌"""
+    cmd = ["journalctl", "--user", "-u", SERVICE, "--no-pager", "-n", str(lines)]
+    if follow:
+        cmd.append("-f")
+    run(cmd, check=False)
+
+
+@app.command()
+def status():
+    """查看 service 狀態與記憶體用量"""
+    run(["systemctl", "--user", "--no-pager", "status", SERVICE], check=False)
+    print("\n--- 記憶體用量 ---")
+    result = run(
+        ["systemctl", "--user", "show", SERVICE, "--property=MemoryCurrent", "--property=MemoryMax"],
+        check=False,
+        capture=True,
+    )
+    if result.stdout:
+        print(result.stdout.strip())
+
+
+if __name__ == "__main__":
+    try:
+        app()
+    except subprocess.CalledProcessError as e:
+        sys.exit(e.returncode)

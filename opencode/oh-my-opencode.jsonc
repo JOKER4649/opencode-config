@@ -1,9 +1,5 @@
 {
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
-  "sisyphus_agent": {
-    "default_builder_enabled": false
-  },
-  "auto_update": true,
   "agents": {
     "sisyphus": {
       "model": "anthropic/claude-opus-4-6",
@@ -40,7 +36,7 @@
       "variant": "xhigh"
     },
     "atlas": {
-      "model": "kimi-for-coding/k2p5",
+      "model": "alibaba-coding-plan/kimi-k2.5",
       "prompt_append": "- **不**建立 git worktree"
     }
   },
@@ -66,15 +62,26 @@
       "model": "anthropic/claude-sonnet-4-6"
     },
     "unspecified-high": {
-      "model": "openai/gpt-5.4",
-      "variant": "high"
+      "model": "anthropic/claude-opus-4-6"
     },
     "writing": {
       "model": "google/gemini-3-flash"
     }
   },
+  "auto_update": true,
+  "sisyphus_agent": {
+    "default_builder_enabled": false,
+    "tasks": {
+      "enabled": false,
+      "storage_path": ".sisyphus/tasks",
+      "claude_code_compat": false
+    }
+  },
   "disabled_hooks": [
     "keyword-detector",
+  ],
+  "disabled_skills": [
+    "playwright",
     "dev-browser"
   ],
   "background_task": {

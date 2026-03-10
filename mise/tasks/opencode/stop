@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-#MISE description="⏹️ 停止 opencode-web systemd service"
-set -euo pipefail
-systemctl --user stop opencode-web.service
-echo "✓ opencode-web 已停止"

@@ -22,6 +22,37 @@
       }
     }
   },
+  "formatter": {
+    "eslint": {
+      "command": [
+        "bunx",
+        "eslint",
+        "--fix",
+        "$FILE"
+      ],
+      "extensions": [
+        ".js",
+        ".jsx",
+        ".ts",
+        ".tsx"
+      ]
+    },
+    "prettier": {
+      "extensions": [
+        ".html",
+        ".css",
+        ".md",
+        ".json",
+        ".yaml",
+        ".yml",
+        ".graphql",
+        ".vue",
+        ".svelte",
+        ".less",
+        ".scss"
+      ]
+    }
+  },
   "mcp": {
     // oh-my-opencode 已內建
     // "playwright": {
