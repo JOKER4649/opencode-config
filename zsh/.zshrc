@@ -141,3 +141,4 @@ export PATH="$HOME/myconfig/commands:$PATH"
 
 # Added by LM Studio CLI tool (lms)
 export PATH="$PATH:/home/joker/.lmstudio/bin"
+export OPENCODE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT=true
