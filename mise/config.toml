@@ -20,6 +20,7 @@ claude = "latest"
 "npm:portless" = "latest"
 "npm:@code-yeongyu/comment-checker" = "latest"
 "pipx:mycli" = "latest"
+glab = { version = "latest", exe = "glab" }
 
 [settings]
 npm.package_manager = "bun"
