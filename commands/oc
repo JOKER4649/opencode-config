@@ -1,0 +1,153 @@
+#!/usr/bin/env python3
+
+"""啟動 opencode，自動偵測專案名稱並重新命名 zellij tab。"""
+
+import json
+import os
+import random
+import re
+import socket
+import subprocess
+import sys
+from pathlib import Path
+
+
+def find_available_port(start: int = 4000, end: int = 4999) -> int:
+    """在指定範圍內找到一個可用的埠號。"""
+    candidates = list(range(start, end + 1))
+    random.shuffle(candidates)
+
+    for port in candidates:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            if s.connect_ex(("localhost", port)) != 0:
+                return port
+
+    print(f"錯誤：範圍 {start}-{end} 內找不到可用埠號", file=sys.stderr)
+    sys.exit(1)
+
+# ---- 專案名稱偵測 ----
+
+
+def _git_root() -> Path | None:
+    """取得 git 倉庫根目錄。"""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True, text=True, check=True,
+        )
+        return Path(result.stdout.strip())
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+
+
+def _from_package_json(root: Path) -> str | None:
+    """從 package.json 取得專案名稱 (JS/TS)。"""
+    path = root / "package.json"
+    if not path.is_file():
+        return None
+    try:
+        return json.loads(path.read_text()).get("name") or None
+    except (json.JSONDecodeError, OSError):
+        return None
+
+def _from_cargo_toml(root: Path) -> str | None:
+    """從 Cargo.toml 取得專案名稱 (Rust)。"""
+    path = root / "Cargo.toml"
+    if not path.is_file():
+        return None
+    try:
+        if m := re.search(r'^name\s*=\s*"([^"]+)"', path.read_text(), re.MULTILINE):
+            return m.group(1)
+    except OSError:
+        pass
+    return None
+
+def _from_go_mod(root: Path) -> str | None:
+    """從 go.mod 取得專案名稱 (Go)。"""
+    path = root / "go.mod"
+    if not path.is_file():
+        return None
+    try:
+        if m := re.search(r'^module\s+(\S+)', path.read_text(), re.MULTILINE):
+            # "github.com/user/repo" → "repo"
+            return m.group(1).rsplit("/", 1)[-1]
+    except OSError:
+        pass
+    return None
+
+
+def _from_pyproject_toml(root: Path) -> str | None:
+    """從 pyproject.toml 取得專案名稱 (Python)。"""
+    path = root / "pyproject.toml"
+    if not path.is_file():
+        return None
+    try:
+        if m := re.search(r'^name\s*=\s*"([^"]+)"', path.read_text(), re.MULTILINE):
+            return m.group(1)
+    except OSError:
+        pass
+    return None
+
+
+_DETECTORS = [
+    _from_package_json,
+    _from_cargo_toml,
+    _from_go_mod,
+    _from_pyproject_toml,
+]
+
+def detect_project_name() -> str:
+    """偵測專案名稱：語言設定檔 → git 根目錄名 → CWD 目錄名。"""
+    root = _git_root() or Path.cwd()
+
+    for detect in _DETECTORS:
+        if name := detect(root):
+            return name
+
+    return root.name
+
+
+# ---- 終端機標題 ----
+
+
+def set_terminal_title(title: str) -> None:
+    """透過 ANSI escape sequence 設定終端機視窗標題。"""
+    sys.stdout.write(f"\033]0;{title}\a")
+    sys.stdout.flush()
+
+
+def rename_zellij_tab(name: str) -> None:
+    """重新命名當前 zellij tab（僅在 zellij 環境中生效）。"""
+    if "ZELLIJ" not in os.environ:
+        return
+    subprocess.run(["zellij", "action", "rename-tab", name], capture_output=True)
+
+
+# ---- 入口 ----
+
+def _has_subcommand() -> bool:
+    """檢查是否有子命令（第一個非 flag 的引數）。"""
+    return len(sys.argv) > 1 and not sys.argv[1].startswith("-")
+
+
+def main() -> None:
+    # 子命令（如 oc config, oc auth）直接轉發，不透過 tmux
+    if _has_subcommand():
+        os.execvp("opencode", ["opencode", *sys.argv[1:]])
+
+    project = detect_project_name()
+    port = find_available_port()
+    title = f"🔳 {project}"
+    session = f"{project}-{port}"
+
+    set_terminal_title(title)
+    rename_zellij_tab(title)
+    extra_args = " ".join(sys.argv[1:])
+    opencode_cmd = f"opencode --port {port} {extra_args}".rstrip()
+    subprocess.run(
+        ["tmux", "new-session", "-s", session, opencode_cmd],
+    )
+
+
+if __name__ == "__main__":
+    main()

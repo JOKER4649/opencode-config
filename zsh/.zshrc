@@ -127,15 +127,6 @@ fi
 
 export EDITOR="code --wait"
 
-function oc() {
-  local port
-  while true; do
-    port=$(( RANDOM % 1000 + 4000 ))
-    [[ -z $(ss -tlnH sport = :$port) ]] && break
-  done
-  tmux new-session -s "oc-${port}" "opencode --port ${port}"
-}
-
 # 自訂 CLI 命令
 export PATH="$HOME/myconfig/commands:$PATH"
 

@@ -36,9 +36,9 @@
       "variant": "xhigh"
     },
     "atlas": {
-      "model": "anthropic/claude-sonnet-4-6"
+      "model": "anthropic/claude-sonnet-4-6",
       // "model": "alibaba-coding-plan/kimi-k2.5"
-      // "prompt_append": "- **不**建立 git worktree"
+      "prompt_append": "- `git worktree` 建立在 `./.worktree/[plan_name]` 中"
     }
   },
   "categories": {
