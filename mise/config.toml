@@ -24,6 +24,7 @@ glab = { version = "latest", exe = "glab" }
 "npm:oxlint" = "latest"
 rtk = "latest"
 bat = "latest"
+"pipx:numpy" = "latest"
 
 [settings]
 npm.package_manager = "bun"
