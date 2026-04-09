@@ -10,7 +10,8 @@
       "variant": "medium"
     },
     "oracle": {
-      "model": "github-copilot/gpt-5.4",
+      //"model": "github-copilot/gpt-5.4",
+      "model": "github-copilot/gemini-3.1-pro-preview",
       "variant": "high"
     },
     "librarian": {
@@ -23,7 +24,8 @@
       "model": "opencode-go/kimi-k2.5"
     },
     "prometheus": {
-      "model": "anthropic/claude-opus-4-6",
+      "model": "github-copilot/gemini-3.1-pro-preview",
+      //"model": "anthropic/claude-opus-4-6",
       "variant": "max"
     },
     "metis": {
@@ -65,7 +67,7 @@
       "variant": "max"
     },
     "unspecified-low": {
-      "model": "anthropic/claude-sonnet-4-6"
+      "model": "opencode-go/minimax-m2.7"
     },
     "writing": {
       "model": "google/gemini-3-flash-preview"
