@@ -1,0 +1,348 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# dependencies = ["typer", "httpx"]
+# ///
+"""FiraCode Nerd Font 一鍵安裝工具（從 ryanoasis/nerd-fonts 下載最新 release）"""
+
+import shutil
+import subprocess
+import sys
+import tempfile
+import zipfile
+from pathlib import Path
+from typing import Annotated
+
+import httpx
+import typer
+
+GITHUB_API = "https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest"
+ASSET_NAME = "FiraCode.zip"
+
+# 字型安裝到獨立子目錄，便於版本管理與清理
+FONT_DIR = Path.home() / ".local" / "share" / "fonts" / "FiraCode"
+VERSION_FILE = FONT_DIR / ".version"
+
+# fontconfig alias：讓 vanilla "Fira Code" 名稱對映到 Nerd Font Mono 變體
+# Mono 變體是唯一 isFixedPitch=1 的變體，且保留全部 101 個 calt ligature lookups
+ALIAS_PATH = (
+    Path.home() / ".config" / "fontconfig" / "conf.d" / "99-firacode-alias.conf"
+)
+ALIAS_TARGET = "FiraCode Nerd Font Mono"
+# 涵蓋常見寫法：有無空格 × 大小寫
+ALIAS_NAMES = ["Fira Code", "FiraCode", "fira code", "firacode"]
+
+
+def run(
+    cmd: list[str], *, check: bool = True, capture: bool = False
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(cmd, check=check, capture_output=capture, text=True)
+
+
+# ---- 字型安裝狀態 ----
+
+
+def get_installed_version() -> str | None:
+    """讀取管理目錄內的版本記錄，若未安裝回傳 None"""
+    if not FONT_DIR.exists() or not any(FONT_DIR.glob("*.ttf")):
+        return None
+    if VERSION_FILE.exists():
+        return VERSION_FILE.read_text().strip() or "unknown"
+    return "unknown"
+
+
+def find_legacy_files() -> list[Path]:
+    """偵測父目錄零散的 FiraCode 字型檔案（舊安裝殘留）"""
+    parent = FONT_DIR.parent
+    if not parent.exists():
+        return []
+    return sorted(p for p in parent.glob("*.ttf") if "FiraCode" in p.name)
+
+
+# ---- fontconfig alias ----
+
+
+def render_alias_config() -> str:
+    """產生 fontconfig alias XML（內容必須 deterministic 以便 diff 比對）
+
+    使用 <match>+<edit prepend_first strong> 而非 <alias>+<prefer>：
+    後者預設 weak binding，遇到 CSS 的 generic fallback (monospace/sans-serif)
+    會被系統 conf.d 的 sans 展開淹沒，導致 alias 形同虛設。
+    prepend_first + strong 明確把目標字型放到 family list 最前、且標記 strong，
+    確保在 match 階段優先命中。
+    """
+    entries = "\n".join(
+        f"""  <match target="pattern">
+    <test qual="any" name="family">
+      <string>{name}</string>
+    </test>
+    <edit name="family" mode="prepend_first" binding="strong">
+      <string>{ALIAS_TARGET}</string>
+    </edit>
+  </match>"""
+        for name in ALIAS_NAMES
+    )
+    return f"""<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
+<!--
+  由 install-firacode 產生。將 vanilla Fira Code 名稱對映到 {ALIAS_TARGET}。
+  Mono 變體保留全部 ligatures (calt) 且 isFixedPitch=1，適合瀏覽器/編輯器等寬場景。
+  要移除: rm {ALIAS_PATH}
+-->
+<fontconfig>
+{entries}
+</fontconfig>
+"""
+
+
+def alias_status() -> str:
+    """回傳 alias 現狀: 'current' / 'outdated' / 'missing'"""
+    if not ALIAS_PATH.exists():
+        return "missing"
+    try:
+        existing = ALIAS_PATH.read_text()
+    except OSError:
+        return "missing"
+    return "current" if existing == render_alias_config() else "outdated"
+
+
+def write_alias() -> None:
+    """寫入 fontconfig alias 設定檔"""
+    ALIAS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    ALIAS_PATH.write_text(render_alias_config())
+
+
+def verify_alias() -> list[tuple[str, str]]:
+    """用 fc-match 驗證每個 alias 名稱，回傳 [(name, matched_family), ...]"""
+    results: list[tuple[str, str]] = []
+    for name in ALIAS_NAMES:
+        r = run(["fc-match", "-f", "%{family}", name], capture=True, check=False)
+        results.append((name, r.stdout.strip()))
+    return results
+
+
+def report_alias_verification() -> None:
+    """印出 alias 驗證結果表"""
+    print("\n驗證 alias (fc-match):")
+    for name, matched in verify_alias():
+        # matched 可能是 "FiraCode Nerd Font Mono" 或其他（fallback）
+        mark = "✓" if matched == ALIAS_TARGET else "✗"
+        print(f'  {mark} "{name}" → {matched}')
+
+
+# ---- 下載 / 解壓 ----
+
+
+def get_latest_release() -> tuple[str, str]:
+    """從 GitHub API 取得最新版本與 FiraCode.zip 下載 URL"""
+    resp = httpx.get(GITHUB_API, timeout=30, follow_redirects=True)
+    resp.raise_for_status()
+    data = resp.json()
+    version: str = data["tag_name"]  # e.g. "v3.4.0"
+    for asset in data["assets"]:
+        if asset["name"] == ASSET_NAME:
+            return version, asset["browser_download_url"]
+    raise RuntimeError(f"Release {version} 中找不到 {ASSET_NAME}")
+
+
+def download_file(url: str, dest: Path) -> None:
+    """串流下載檔案，顯示進度"""
+    with httpx.stream("GET", url, follow_redirects=True, timeout=120) as resp:
+        resp.raise_for_status()
+        total = int(resp.headers.get("content-length", 0))
+        downloaded = 0
+        with open(dest, "wb") as f:
+            for chunk in resp.iter_bytes(chunk_size=65536):
+                f.write(chunk)
+                downloaded += len(chunk)
+                if total:
+                    pct = downloaded * 100 // total
+                    mb_down = downloaded / 1024 / 1024
+                    mb_total = total / 1024 / 1024
+                    print(
+                        f"\r  下載進度: {pct}% ({mb_down:.1f}MB/{mb_total:.1f}MB)",
+                        end="",
+                        flush=True,
+                    )
+        print()
+
+
+def extract_ttfs(zip_path: Path, target: Path) -> int:
+    """從 zip 解壓所有 .ttf 到目標目錄（覆蓋現有內容），回傳字型檔數量"""
+    if target.exists():
+        shutil.rmtree(target)
+    target.mkdir(parents=True)
+
+    count = 0
+    with zipfile.ZipFile(zip_path) as zf:
+        for info in zf.infolist():
+            if info.is_dir():
+                continue
+            name = Path(info.filename).name
+            if not name.lower().endswith(".ttf"):
+                continue
+            with zf.open(info) as src, open(target / name, "wb") as dst:
+                shutil.copyfileobj(src, dst)
+            count += 1
+
+    if count == 0:
+        raise RuntimeError("zip 內找不到任何 .ttf 檔案")
+    return count
+
+
+# ---- CLI 入口 ----
+
+
+def main(
+    force: Annotated[
+        bool,
+        typer.Option("--force", "-f", help="強制重新安裝，即使版本相同"),
+    ] = False,
+    check: Annotated[
+        bool,
+        typer.Option("--check", "-c", help="僅檢查狀態，不下載/不寫入"),
+    ] = False,
+    clean_legacy: Annotated[
+        bool,
+        typer.Option(
+            "--clean-legacy",
+            help=f"連同 {FONT_DIR.parent} 內零散的 FiraCode*.ttf 一併刪除",
+        ),
+    ] = False,
+    no_alias: Annotated[
+        bool,
+        typer.Option(
+            "--no-alias",
+            help=f"跳過 fontconfig alias (Fira Code/FiraCode → {ALIAS_TARGET})",
+        ),
+    ] = False,
+    alias_only: Annotated[
+        bool,
+        typer.Option(
+            "--alias-only",
+            help="只建立/更新 fontconfig alias，不下載或安裝字型",
+        ),
+    ] = False,
+):
+    """安裝/更新 FiraCode Nerd Font (從 ryanoasis/nerd-fonts 取得最新 release)"""
+    # ===== 模式: 只管理 alias =====
+    if alias_only:
+        print(f"設定 fontconfig alias → {ALIAS_TARGET}")
+        status = alias_status()
+        if status == "current":
+            print(f"  · 已是最新: {ALIAS_PATH}")
+        elif check:
+            verb = "建立" if status == "missing" else "更新"
+            print(f"  → 需要{verb}: {ALIAS_PATH}")
+            raise typer.Exit()
+        else:
+            write_alias()
+            verb = "建立" if status == "missing" else "更新"
+            print(f"  ✓ {verb} {ALIAS_PATH}")
+        report_alias_verification()
+        return
+
+    # ===== 模式: 一般安裝 =====
+    current = get_installed_version()
+    legacy = find_legacy_files()
+    al_status = "skipped" if no_alias else alias_status()
+
+    print(f"目前版本: {current or '未安裝'}")
+    if legacy:
+        print(f"  ⚠ 偵測到 {FONT_DIR.parent} 下有 {len(legacy)} 個舊 FiraCode 字型檔")
+        if clean_legacy:
+            print("  → --clean-legacy 已啟用，稍後將刪除")
+        else:
+            print("  → 加 --clean-legacy 旗標可一併清理")
+    if not no_alias:
+        al_label = {
+            "current": "✓ 已設定",
+            "outdated": "⚠ 內容已過時",
+            "missing": "⚠ 尚未建立",
+        }[al_status]
+        print(f"fontconfig alias: {al_label}")
+
+    print("檢查最新版本中...")
+    version, url = get_latest_release()
+    print(f"最新版本: {version}")
+
+    need_install = current != version or force
+    need_cleanup = bool(clean_legacy and legacy)
+    need_alias_update = (not no_alias) and al_status != "current"
+
+    if not (need_install or need_cleanup or need_alias_update):
+        suffix = "字型已同步" if no_alias else "字型與 alias 皆已同步"
+        print(f"\n✓ 已經是最新版本（{suffix}）")
+        return
+
+    if check:
+        if current != version:
+            print(f"\n有新版本可用: {current or '未安裝'} → {version}")
+        if need_cleanup:
+            print(f"有 {len(legacy)} 個舊字型檔可清理（--clean-legacy）")
+        if need_alias_update:
+            verb = "建立" if al_status == "missing" else "更新"
+            print(f"fontconfig alias 需要{verb}")
+        raise typer.Exit()
+
+    # ---- 字型安裝 ----
+    if need_install:
+        print(f"\n下載中: {current or '無'} → {version}")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            zip_path = Path(tmpdir) / ASSET_NAME
+            download_file(url, zip_path)
+            print("解壓字型檔...")
+            count = extract_ttfs(zip_path, FONT_DIR)
+            print(f"  → 安裝 {count} 個 TTF 到 {FONT_DIR}")
+        VERSION_FILE.write_text(version)
+
+    # ---- 清理舊檔 ----
+    if need_cleanup:
+        print(f"\n清理 {len(legacy)} 個舊字型檔...")
+        for p in legacy:
+            p.unlink()
+            print(f"  ✗ {p.name}")
+
+    # ---- alias 更新 ----
+    if need_alias_update:
+        write_alias()
+        verb = "建立" if al_status == "missing" else "更新"
+        print(f"\n✓ {verb} fontconfig alias: {ALIAS_PATH}")
+
+    # ---- 刷新字型快取 ----
+    # 註：fontconfig alias 不需要 fc-cache（config 變更由各進程啟動時讀取），
+    # 但字型檔變動必須 fc-cache 才會被索引
+    if need_install or need_cleanup:
+        print("\n刷新字型快取...")
+        run(["fc-cache", "-f", str(FONT_DIR.parent)])
+
+    # ---- 驗證字型安裝 ----
+    result = run(
+        ["fc-list", ":family=FiraCode Nerd Font"], capture=True, check=False
+    )
+    variants = sum(1 for line in result.stdout.splitlines() if line.strip())
+    if variants == 0:
+        print(
+            "\n⚠ 警告：fc-list 找不到 FiraCode Nerd Font，可能需要重啟應用程式",
+            file=sys.stderr,
+        )
+        raise typer.Exit(code=1)
+
+    print(f"\n✓ FiraCode Nerd Font {version} 安裝成功（{variants} 個字重可用）")
+
+    # ---- 驗證 alias ----
+    if not no_alias:
+        report_alias_verification()
+
+
+if __name__ == "__main__":
+    try:
+        typer.run(main)
+    except subprocess.CalledProcessError as e:
+        sys.exit(e.returncode)
+    except httpx.HTTPError as e:
+        print(f"網路錯誤: {e}", file=sys.stderr)
+        sys.exit(1)
+    except (zipfile.BadZipFile, RuntimeError) as e:
+        print(f"錯誤: {e}", file=sys.stderr)
+        sys.exit(1)
