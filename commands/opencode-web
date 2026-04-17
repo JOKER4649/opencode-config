@@ -4,20 +4,103 @@
 # ///
 """opencode-web systemd service 管理工具"""
 
+import re
+import secrets
 import subprocess
 import sys
+from pathlib import Path
 from typing import Annotated
 
 import typer
 
 SERVICE = "opencode-web.service"
-URL = "http://0.0.0.0:4096"
+URL = "http://localhost:4096"
+ENV_DIR = Path.home() / ".config" / "opencode-web"
+ENV_FILE = ENV_DIR / "env"
+DEFAULT_USERNAME = "opencode"
+
+
+def build_env_template(username: str, password: str) -> str:
+    return f"""\
+# opencode-web 環境變數 (由 systemd EnvironmentFile 載入)
+# 此檔案含密碼，權限 0600，切勿納入 git。
+
+# HTTP Basic Auth — server 綁 0.0.0.0，未設密碼等於裸奔
+OPENCODE_SERVER_USERNAME={username}
+OPENCODE_SERVER_PASSWORD={password}
+
+# API keys (可選，通常交給 `opencode auth` 管)
+# ANTHROPIC_API_KEY=sk-ant-...
+# OPENAI_API_KEY=sk-...
+"""
 
 app = typer.Typer(help="opencode-web systemd service 管理工具")
 
 
 def run(cmd: list[str], *, check: bool = True, capture: bool = False) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, check=check, capture_output=capture, text=True)
+
+
+def _extract_env_value(content: str, key: str) -> str | None:
+    """從 env 檔內容抓取 KEY=VALUE (忽略註解行)"""
+    for line in content.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        match = re.match(rf"^{re.escape(key)}\s*=\s*(.*)$", stripped)
+        if match:
+            # 去掉前後引號 (systemd EnvironmentFile 支援雙引號)
+            return match.group(1).strip().strip('"').strip("'")
+    return None
+
+
+@app.command()
+def install():
+    """首次安裝：產生密碼、建立 env 檔、daemon-reload、enable --now"""
+    # 1. 確認 service unit 已被 systemd 找到 (依賴 link.py --apply)
+    result = run(["systemctl", "--user", "cat", SERVICE], check=False, capture=True)
+    if result.returncode != 0:
+        print(f"✗ 找不到 {SERVICE}，請先執行：python link.py --apply", file=sys.stderr)
+        sys.exit(1)
+
+    # 2. 建立 env 目錄 + 範本檔 (idempotent — 已存在就不覆蓋)
+    if not ENV_DIR.exists():
+        ENV_DIR.mkdir(parents=True, mode=0o700)
+        print(f"+ 建立目錄  {ENV_DIR}")
+
+    username = DEFAULT_USERNAME
+    password: str | None = None
+
+    if not ENV_FILE.exists():
+        # 全新安裝：自動產生強密碼
+        password = secrets.token_urlsafe(24)
+        ENV_FILE.write_text(build_env_template(username, password))
+        ENV_FILE.chmod(0o600)  # 內含密碼，僅 owner 可讀寫
+        print(f"+ 建立檔案  {ENV_FILE} (已自動產生密碼)")
+    else:
+        # 已存在：尊重用戶自訂，只讀現有值用於最後顯示
+        content = ENV_FILE.read_text()
+        username = _extract_env_value(content, "OPENCODE_SERVER_USERNAME") or DEFAULT_USERNAME
+        password = _extract_env_value(content, "OPENCODE_SERVER_PASSWORD")
+        print(f"· 已存在    {ENV_FILE} (保留現有設定)")
+
+    # 3. 重新載入、啟用開機自啟、重啟套用最新 env (即使已 running)
+    run(["systemctl", "--user", "daemon-reload"])
+    run(["systemctl", "--user", "enable", SERVICE])
+    run(["systemctl", "--user", "restart", SERVICE])
+    run(["systemctl", "--user", "--no-pager", "status", SERVICE], check=False)
+
+    print(f"\n✓ opencode-web 已安裝並啟動 → {URL}")
+    if password:
+        print("\n🔐 登入資訊 (HTTP Basic Auth)")
+        print(f"   Username: {username}")
+        print(f"   Password: {password}")
+    else:
+        print("\n⚠  OPENCODE_SERVER_PASSWORD 未設定，server 未加密！")
+
+    print(f"\nℹ  修改密碼 / API keys / 其他環境變數：")
+    print(f"   1. 編輯  {ENV_FILE}")
+    print(f"   2. 套用  opencode-web restart")
 
 
 @app.command()

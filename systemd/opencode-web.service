@@ -17,10 +17,10 @@ MemoryMax=8G
 MemoryHigh=7G
 
 # Security hardening
+# NOTE: 不設 ProtectHome — opencode 是 coding 工具，user 需從 web UI 編輯
+# 任意 project；而 service 跑在 user 自己 uid，ProtectHome 對同 uid 無意義。
 NoNewPrivileges=true
 ProtectSystem=strict
-ProtectHome=read-only
-ReadWritePaths=%h/.local/share/opencode %h/.config/opencode %h/.cache
 PrivateTmp=true
 
 # Logging
