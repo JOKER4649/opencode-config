@@ -33,6 +33,7 @@ LINKS: list[LinkEntry] = [
     LinkEntry("mise", "~/.config/mise"),
     LinkEntry("starship/starship.toml", "~/.config/starship.toml"),
     LinkEntry("tmux/tmux.conf", "~/.config/tmux/tmux.conf"),
+    LinkEntry("zellij/config.kdl", "~/.config/zellij/config.kdl"),
     LinkEntry(
         "systemd/opencode-web.service", "~/.config/systemd/user/opencode-web.service"
     ),
