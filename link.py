@@ -45,6 +45,14 @@ LINKS: list[LinkEntry] = [
         "environment.d/portless.conf",
         "~/.config/environment.d/portless.conf",
     ),
+    LinkEntry(
+        "environment.d/fcitx5.conf",
+        "~/.config/environment.d/fcitx5.conf",
+    ),
+    LinkEntry(
+        "fcitx5/fcitx5.desktop",
+        "~/.config/autostart/fcitx5.desktop",
+    ),
 ]
 
 # ============================================================

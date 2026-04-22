@@ -15,6 +15,7 @@
 | `backup/` | 每日自動備份腳本（cron 排程，自動 commit + push） |
 | `systemd/` | systemd user service 設定（opencode-web、portless-proxy 等） |
 | `environment.d/` | systemd user 環境變數（`~/.config/environment.d/`） |
+| `fcitx5/` | [Fcitx5](https://fcitx-im.org) 輸入法 XDG autostart 設定 |
 
 ## 新增工具設定
 
