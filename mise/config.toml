@@ -26,6 +26,7 @@ glab = { version = "latest", exe = "glab" }
 bat = "latest"
 "pipx:numpy" = "latest"
 act = "latest"
+codex = "latest"
 
 [settings]
 npm.package_manager = "bun"
