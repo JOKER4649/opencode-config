@@ -22,7 +22,7 @@ claude = "latest"
 "pipx:mycli" = "latest"
 glab = { version = "latest", exe = "glab" }
 "npm:oxlint" = "latest"
-rtk = "latest"
+# rtk = "latest"  # 暫時停用 - plugin 移至 plugins-disabled/
 bat = "latest"
 "pipx:numpy" = "latest"
 act = "latest"
