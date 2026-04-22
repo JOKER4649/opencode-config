@@ -1,0 +1,387 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["typer", "httpx"]
+# ///
+"""OpenCode Desktop (GUI, Beta) 一鍵安裝/更新工具（Fedora 專用，.rpm 安裝）
+
+從官網 opencode.ai 下載最新的 linux-x64 rpm 並透過 dnf 安裝。
+GUI 版是 beta，檔名不含版本號，因此用 HTTP ETag + 已安裝 rpm 版本
+做雙重版本追蹤：
+  - ETag 變更 → 有新 build 可下載
+  - rpm 未安裝 → 需要安裝
+  - 兩者都沒變 → 跳過（節省 176MB 下載）
+
+用法：
+    install-opencode-gui                    # 有新版才安裝（stable channel）
+    install-opencode-gui --check            # 只檢查是否有更新（HEAD 請求，不下載）
+    install-opencode-gui --force            # 強制重新下載安裝
+    install-opencode-gui --version 1.3.0    # 安裝/降級到指定版本（從 GitHub release）
+
+跟 CLI 版的關係：
+    - CLI (`opencode`) 由 mise 管理，見 mise/config.toml
+    - GUI (rpm 套件名 `open-code`, binary `/usr/bin/OpenCode`) 由本腳本管理
+    兩者可共存，不會衝突（rpm 另附 /usr/bin/opencode-cli，
+    但 mise shim 在 PATH 優先，不影響 `opencode` 指令）。
+"""
+
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+from typing import Annotated
+
+import httpx
+import typer
+
+# 官方 stable channel 的 Linux x86_64 rpm 連結（自動 redirect 到 CDN）
+DOWNLOAD_URL = "https://opencode.ai/download/stable/linux-x64-rpm"
+
+# 指定版本時從 GitHub release 直接下載（opencode.ai stable channel 只提供最新版，
+# 無法指定歷史版本；GitHub releases 的 asset 命名自 v1.3.0 起維持穩定）
+GITHUB_RELEASE_URL_TEMPLATE = (
+    "https://github.com/anomalyco/opencode/releases/download/"
+    "v{version}/opencode-desktop-linux-x86_64.rpm"
+)
+
+# rpm 套件名稱 (用 rpm -qp 驗證 open-code-1.14.18-1.x86_64.rpm 得知)
+# 注意: 檔名是 opencode-desktop-linux-x86_64.rpm (下載檔名)，
+# 但套件實際名稱是 "open-code" (有連字號)
+PACKAGE_NAME = "open-code"
+
+# 安裝後的主要 binary 路徑 (rpm -qlp 驗證)
+DESKTOP_BIN = "/usr/bin/OpenCode"
+
+# 狀態紀錄：保存上次安裝的 HTTP ETag 用於快速版本比對
+STATE_DIR = Path.home() / ".local" / "state" / "install-opencode-gui"
+ETAG_FILE = STATE_DIR / "etag"
+
+
+def run(
+    cmd: list[str],
+    *,
+    check: bool = True,
+    capture: bool = False,
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(cmd, check=check, capture_output=capture, text=True)
+
+
+# ---- 環境檢查 ----
+
+
+def require_dnf() -> None:
+    """確認跑在 Fedora/RHEL/Rocky 系列（有 dnf）"""
+    if not shutil.which("dnf"):
+        print(
+            "此腳本僅支援有 dnf 的系統 (Fedora/RHEL/Rocky)",
+            file=sys.stderr,
+        )
+        print(
+            "其他 distro 請從 https://opencode.ai/download 下載對應格式",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+
+# ---- 版本查詢 ----
+
+
+def get_installed_version() -> str | None:
+    """回傳已安裝的 rpm 版本字串 (version-release)，未安裝則回傳 None"""
+    r = run(
+        ["rpm", "-q", "--queryformat", "%{VERSION}-%{RELEASE}", PACKAGE_NAME],
+        capture=True,
+        check=False,
+    )
+    # rpm -q 在未安裝時會印「is not installed」到 stdout，exit code 非 0
+    return r.stdout.strip() if r.returncode == 0 else None
+
+
+def get_rpm_version_from_file(rpm_path: Path) -> str:
+    """從本地 rpm 檔案讀出 version-release（用來跟已安裝比對）"""
+    r = run(
+        [
+            "rpm",
+            "-qp",
+            "--queryformat",
+            "%{VERSION}-%{RELEASE}",
+            str(rpm_path),
+        ],
+        capture=True,
+    )
+    return r.stdout.strip()
+
+
+def normalize_version(v: str) -> str:
+    """接受 '1.3.0' / 'v1.3.0' / 'V1.3.0'，統一回傳不含 v 前綴的字串。"""
+    return v.lstrip("vV")
+
+
+def version_tuple(v: str) -> tuple[int, ...]:
+    """從版本字串抽出所有數字段，用於比對（含降級判斷）。
+
+    例: '1.14.19-1' → (1, 14, 19, 1); '1.3.0' → (1, 3, 0)
+    """
+    return tuple(int(x) for x in re.findall(r"\d+", v))
+
+
+def build_version_url(version: str) -> str:
+    """組出指定版本的 GitHub rpm 下載 URL。"""
+    return GITHUB_RELEASE_URL_TEMPLATE.format(version=normalize_version(version))
+
+
+def read_last_etag() -> str | None:
+    """讀上次成功安裝時記錄的 ETag"""
+    if not ETAG_FILE.exists():
+        return None
+    return ETAG_FILE.read_text().strip() or None
+
+
+def save_etag(etag: str) -> None:
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
+    ETAG_FILE.write_text(etag)
+
+
+def clear_etag() -> None:
+    """刪除已存的 ETag。指定版本安裝後呼叫，避免下次預設模式誤判「已是最新」。"""
+    if ETAG_FILE.exists():
+        ETAG_FILE.unlink()
+
+
+def get_latest_etag() -> str:
+    """HEAD 請求拿最新檔案的 ETag（Azure Blob 的 content-based hash，
+    檔案內容沒變就不會變，適合當版本指紋）"""
+    resp = httpx.head(DOWNLOAD_URL, follow_redirects=True, timeout=30)
+    resp.raise_for_status()
+    etag = resp.headers.get("etag")
+    if not etag:
+        raise RuntimeError("回應缺少 ETag header，無法判斷版本")
+    return etag
+
+
+# ---- 下載 / 安裝 ----
+
+
+def download_rpm(dest: Path, url: str = DOWNLOAD_URL) -> str:
+    """串流下載 rpm 並顯示進度，回傳下載到的 ETag
+
+    進度顯示自動適配環境：
+      - TTY: 用 \\r 單行滾動 (每 chunk 更新)
+      - 非 TTY (pipe/log): 每 10% 印一行，避免日誌爆炸
+    """
+    is_tty = sys.stdout.isatty()
+    with httpx.stream(
+        "GET", url, follow_redirects=True, timeout=300
+    ) as resp:
+        resp.raise_for_status()
+        etag = resp.headers.get("etag", "")
+        total = int(resp.headers.get("content-length", 0))
+        downloaded = 0
+        last_milestone = -1  # 非 TTY 時用來節流 (每 10% 印一次)
+        with open(dest, "wb") as f:
+            for chunk in resp.iter_bytes(chunk_size=65536):
+                f.write(chunk)
+                downloaded += len(chunk)
+                if not total:
+                    continue
+                pct = downloaded * 100 // total
+                mb_dl = downloaded / 1024 / 1024
+                mb_tot = total / 1024 / 1024
+                if is_tty:
+                    print(
+                        f"\r  下載進度: {pct}% ({mb_dl:.1f}MB/{mb_tot:.1f}MB)",
+                        end="",
+                        flush=True,
+                    )
+                else:
+                    # 每 10% 一行 (0, 10, 20, ..., 100)
+                    milestone = pct // 10
+                    if milestone != last_milestone:
+                        last_milestone = milestone
+                        print(
+                            f"  下載進度: {pct}% ({mb_dl:.1f}MB/{mb_tot:.1f}MB)",
+                            flush=True,
+                        )
+        if is_tty:
+            print()
+    return etag
+
+
+def install_rpm(rpm_path: Path, *, downgrade: bool = False) -> None:
+    """用 sudo dnf 安裝 rpm。dnf install 不會自動降版，指定 downgrade=True 改用 dnf downgrade"""
+    print("安裝中（需 sudo）...")
+    # dnf install ./path.rpm 會自動判斷相同版本 → "Nothing to do"
+    # --allowerasing: 讓 dnf 可自動移除衝突的舊版
+    subcommand = "downgrade" if downgrade else "install"
+    run(["sudo", "dnf", subcommand, "-y", "--allowerasing", str(rpm_path)])
+
+
+# ---- CLI 入口 ----
+
+
+def main(
+    force: Annotated[
+        bool,
+        typer.Option("--force", "-f", help="強制重新下載並安裝，忽略版本比對"),
+    ] = False,
+    check: Annotated[
+        bool,
+        typer.Option("--check", "-c", help="只檢查是否有更新（HEAD 請求，不下載）"),
+    ] = False,
+    version: Annotated[
+        str | None,
+        typer.Option(
+            "--version",
+            "-V",
+            help=(
+                "指定版本（例: 1.3.0 或 v1.3.0），從 GitHub release 下載。"
+                "留空則從 stable channel 取最新版。可用於降級/釘版。"
+            ),
+        ),
+    ] = None,
+) -> None:
+    """安裝/更新 OpenCode Desktop (GUI, Beta)。預設抓 stable 最新版；--version 可指定版本。"""
+    require_dnf()
+
+    installed = get_installed_version()
+    print(f"目前版本: {installed or '未安裝'}")
+
+    if version is not None:
+        # ---- 指定版本模式：從 GitHub release 直接下載 ----
+        target = normalize_version(version)
+        download_url = build_version_url(target)
+        print(f"目標版本: v{target}")
+
+        # 比對已安裝版本（只比版本號本身，忽略 rpm release 後綴如 '-1'）
+        installed_base = installed.split("-")[0] if installed else None
+        if installed_base == target and not force:
+            print(f"\n✓ 已安裝 v{target}，跳過（--force 可強制重裝）")
+            return
+
+        if installed_base == target:
+            print("  → --force 指定，重新安裝相同版本")
+        elif installed is None:
+            print("  → 尚未安裝，將執行首次安裝")
+        else:
+            print(f"  → 將從 {installed} 切換到 v{target}")
+
+        if check:
+            print("\n(--check 模式：不執行實際下載/安裝)")
+            raise typer.Exit()
+
+        print(f"\n下載 rpm 中... ({download_url})")
+        with tempfile.TemporaryDirectory(prefix="install-opencode-gui-") as tmp:
+            rpm_path = Path(tmp) / "open-code.rpm"
+            try:
+                download_rpm(rpm_path, url=download_url)
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 404:
+                    print(f"\n錯誤: 找不到 v{target} 的 rpm 檔案", file=sys.stderr)
+                    print(f"URL: {download_url}", file=sys.stderr)
+                    print(
+                        "請確認版本號是否存在: "
+                        "https://github.com/anomalyco/opencode/releases",
+                        file=sys.stderr,
+                    )
+                    raise typer.Exit(code=1)
+                raise
+
+            rpm_version = get_rpm_version_from_file(rpm_path)
+            print(f"  → rpm 版本: {rpm_version}")
+
+            # dnf install 不會自動降版，需明確切換到 dnf downgrade
+            is_downgrade = (
+                installed is not None
+                and version_tuple(rpm_version) < version_tuple(installed)
+            )
+            if is_downgrade:
+                print(f"  → 偵測到降級: {installed} → {rpm_version}，使用 dnf downgrade")
+
+            print()
+            install_rpm(rpm_path, downgrade=is_downgrade)
+
+        # 指定版本會讓 stable channel 的 ETag 追蹤失真，清除以免下次誤判「已是最新」
+        clear_etag()
+    else:
+        # ---- Stable channel 模式（ETag 追蹤最新版）----
+        last_etag = read_last_etag()
+
+        print("檢查最新版本中...")
+        latest_etag = get_latest_etag()
+
+        # 雙重判斷：兩者都相符才算「已是最新」
+        #   - ETag 相符 → 遠端 build 沒變
+        #   - installed 非 None → 系統上實際有裝
+        # 任一不符 + 非 --force → 需要動作
+        up_to_date = installed is not None and last_etag == latest_etag
+
+        if up_to_date and not force:
+            print("\n✓ 已經是最新版本（ETag 相符且 rpm 已安裝）")
+            return
+
+        # 印出變更原因，方便使用者理解為什麼觸發下載
+        if installed is None:
+            print("  → 尚未安裝，將執行首次安裝")
+        elif last_etag != latest_etag:
+            print("  → 偵測到新 build (ETag 變更)")
+        elif force:
+            print("  → --force 指定，忽略版本比對")
+
+        if check:
+            # 只檢查模式：回報差異後直接離開，不下載
+            print("\n(--check 模式：不執行實際下載/安裝)")
+            raise typer.Exit()
+
+        # ---- 下載 + 安裝 ----
+        print("\n下載 rpm 中...")
+        with tempfile.TemporaryDirectory(prefix="install-opencode-gui-") as tmp:
+            rpm_path = Path(tmp) / "open-code.rpm"
+            download_etag = download_rpm(rpm_path)
+
+            # 從檔案本身讀出版本號（用於安裝完成訊息與驗證）
+            rpm_version = get_rpm_version_from_file(rpm_path)
+            print(f"  → rpm 版本: {rpm_version}")
+
+            print()
+            install_rpm(rpm_path)
+
+        # 只有在 dnf 成功後才存 etag，失敗的話下次會重試
+        save_etag(download_etag)
+
+    # ---- 驗證（共用）----
+    new_version = get_installed_version()
+    if new_version is None:
+        print(
+            "\n⚠ 警告: dnf 指令完成但 rpm -q 找不到套件",
+            file=sys.stderr,
+        )
+        raise typer.Exit(code=1)
+
+    # 確認 dnf 確實裝到我們下載的版本（而非跳過）
+    if new_version != rpm_version:
+        print(
+            f"\n⚠ 注意: 下載版本 {rpm_version}，但系統顯示 {new_version}",
+            file=sys.stderr,
+        )
+
+    print(f"\n✓ OpenCode Desktop {new_version} 安裝成功！")
+    if installed is None:
+        print("\n[首次安裝] 從應用程式選單啟動「OpenCode」，或執行:")
+        print(f"  {DESKTOP_BIN}")
+        print("\n注意: 此 rpm 會同時裝 /usr/bin/opencode-cli，")
+        print("      但 mise 管理的 `opencode` CLI 仍由 mise shim 優先接管。")
+
+
+if __name__ == "__main__":
+    try:
+        typer.run(main)
+    except subprocess.CalledProcessError as e:
+        sys.exit(e.returncode)
+    except httpx.HTTPError as e:
+        print(f"網路錯誤: {e}", file=sys.stderr)
+        sys.exit(1)
+    except RuntimeError as e:
+        print(f"錯誤: {e}", file=sys.stderr)
+        sys.exit(1)
