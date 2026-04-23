@@ -13,6 +13,14 @@
     "bash": {
       "pkill -f *": "deny",
     },
+    // 工作目錄外的檔案存取：預設 "ask"（opencode default），但信任的 temp/cache 路徑直接放行
+    // 其他未列出的外部路徑（如 ~/.ssh, ~/.config/gh/hosts.yml 等敏感目錄）仍維持詢問
+    "external_directory": {
+      "/tmp/**": "allow",
+      "/var/tmp/**": "allow",
+      "~/.cache/**": "allow",
+      "~/.local/state/**": "allow",
+    },
   },
   "agent": {
     "explore": {
