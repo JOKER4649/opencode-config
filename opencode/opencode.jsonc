@@ -43,7 +43,7 @@
     // Biome 處理 TS/JS/JSX/TSX/JSON/JSONC/CSS（格式化 + import 排序）
     // Wrapper 邏輯：專案有 biome.json/biome.jsonc 則用專案配置，否則 fallback 全局 myconfig/biome/
     "biome": {
-      "command": ["/home/joker/myconfig/formatters/fmt-biome", "$FILE"],
+      "command": ["~/myconfig/formatters/fmt-biome", "$FILE"],
       "extensions": [
         ".js",
         ".jsx",
@@ -61,7 +61,7 @@
     // Prettier 處理 Biome 不擅長的 SFC 與 markup 格式（Vue/Astro/Svelte/MD/YAML/HTML/SCSS/GraphQL）
     // Wrapper 邏輯：專案有 .prettierrc*/prettier.config.* 則用專案配置（優先用專案 binary）
     "prettier": {
-      "command": ["/home/joker/myconfig/formatters/fmt-prettier", "$FILE"],
+      "command": ["~/myconfig/formatters/fmt-prettier", "$FILE"],
       "extensions": [
         ".vue",
         ".astro",
@@ -82,7 +82,7 @@
     // Ruff 處理 Python（.py/.pyi）
     // Wrapper 邏輯：專案有 ruff.toml / pyproject.toml[tool.ruff] 則用專案配置，否則 fallback 全局
     "ruff": {
-      "command": ["/home/joker/myconfig/formatters/fmt-ruff", "$FILE"],
+      "command": ["~/myconfig/formatters/fmt-ruff", "$FILE"],
       "extensions": [".py", ".pyi"],
     },
   },
