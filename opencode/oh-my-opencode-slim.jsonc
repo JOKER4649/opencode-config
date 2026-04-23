@@ -34,13 +34,14 @@
       // Librarian = 原本的 librarian (外部文件查找)
       "librarian": {
         //"model": "opencode/gemini-3-flash",
-        "model": "minimax-coding-plan/MiniMax-M2.7",
+        "model": "openai/gpt-5.4-mini",
+        "variant": "high",
         "skills": [],
         "mcps": ["websearch", "context7", "grep_app"],
       },
       // Explorer = 原本的 explore (程式碼搜尋)
       "explorer": {
-        "model": "openai/gpt-5.4-mini",
+        "model": "minimax-coding-plan/MiniMax-M2.7",
       },
       // Designer = 原本的 visual-engineering category
       "designer": {
@@ -52,6 +53,7 @@
       // Fixer = 原本的 sisyphus-junior (快速執行)
       "fixer": {
         "model": "openai/gpt-5.4-mini",
+        "variant": "xhigh"
       },
       // Observer = 原本的 multimodal-looker (需要 disabled_agents=[] 才會啟用)
       "observer": {
