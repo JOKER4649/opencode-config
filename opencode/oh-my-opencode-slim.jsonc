@@ -14,29 +14,26 @@
 
   // ─── Preset: 用戶原本 OmO 偏好的模型映射 ───────────────────────────────
   // 選用此 preset 作為內建 7+1 agent 的模型配置
-  "preset": "default",
+  "preset": "gpt-5-5",
 
   "presets": {
     "default": {
       // Orchestrator = 相當於原本的 sisyphus (主協調者)
       "orchestrator": {
-        "model": "anthropic/claude-opus-4-7",
+        "model": "kimi-for-coding/k2p6",
         "variant": "max",
         "skills": ["*"],
         "mcps": ["*", "!context7"],
       },
       // Oracle = 原本的 oracle (深度推理 / code review)
       "oracle": {
-        "model": "openai/gpt-5.4",
+        "model": "openai/gpt-5.5",
         "variant": "high",
-        "skills": ["simplify"],
+        "skills": ["*"],
       },
       // Librarian = 原本的 librarian (外部文件查找)
       "librarian": {
-        //"model": "opencode/gemini-3-flash",
-        "model": "openai/gpt-5.4-mini",
-        "variant": "high",
-        "skills": [],
+        "model": "minimax-coding-plan/MiniMax-M2.7",
         "mcps": ["websearch", "context7", "grep_app"],
       },
       // Explorer = 原本的 explore (程式碼搜尋)
@@ -45,24 +42,71 @@
       },
       // Designer = 原本的 visual-engineering category
       "designer": {
-        "model": "opencode/gemini-3.1-pro",
+        "model": "github-copilot/gemini-3.1-pro",
         "variant": "high",
         "skills": ["agent-browser"],
         "mcps": [],
       },
       // Fixer = 原本的 sisyphus-junior (快速執行)
       "fixer": {
-        "model": "openai/gpt-5.4-mini",
-        "variant": "xhigh"
+        "model": "openai/gpt-5.3-codex-spark",
+        "variant": "low",
       },
       // Observer = 原本的 multimodal-looker (需要 disabled_agents=[] 才會啟用)
       "observer": {
-        "model": "opencode-go/kimi-k2.5",
+        "model": "kimi-for-coding/k2p5",
       },
       // Council master = 合成 councillors 答案的 model. 需要強 reasoning
       // (councillors 另在 top-level "council.presets" 定義)
       "council": {
-        "model": "openai/gpt-5.4",
+        "model": "openai/gpt-5.5",
+        "variant": "high",
+      },
+    },
+    // 注意: Slim 的 preset prompt 目錄只接受英數 / _ / -，所以用 gpt-5-5 而非 gpt-5.5
+    "gpt-5-5": {
+      // Orchestrator = 相當於原本的 sisyphus (主協調者)
+      "orchestrator": {
+        "model": "openai/gpt-5.5",
+        "variant": "high",
+        "skills": ["*"],
+        "mcps": ["*", "!context7"],
+      },
+      // Oracle = 原本的 oracle (深度推理 / code review)
+      "oracle": {
+        "model": "openai/gpt-5.5",
+        "variant": "high",
+        "skills": ["*"],
+      },
+      // Librarian = 原本的 librarian (外部文件查找)
+      "librarian": {
+        "model": "minimax-coding-plan/MiniMax-M2.7",
+        "mcps": ["websearch", "context7", "grep_app"],
+      },
+      // Explorer = 原本的 explore (程式碼搜尋)
+      "explorer": {
+        "model": "minimax-coding-plan/MiniMax-M2.7",
+      },
+      // Designer = 原本的 visual-engineering category
+      "designer": {
+        "model": "github-copilot/gemini-3.1-pro",
+        "variant": "high",
+        "skills": ["agent-browser"],
+        "mcps": [],
+      },
+      // Fixer = 原本的 sisyphus-junior (快速執行)
+      "fixer": {
+        "model": "openai/gpt-5.3-codex-spark",
+        "variant": "low",
+      },
+      // Observer = 原本的 multimodal-looker (需要 disabled_agents=[] 才會啟用)
+      "observer": {
+        "model": "kimi-for-coding/k2p5",
+      },
+      // Council master = 合成 councillors 答案的 model. 需要強 reasoning
+      // (councillors 另在 top-level "council.presets" 定義)
+      "council": {
+        "model": "openai/gpt-5.5",
         "variant": "high",
       },
     },
@@ -75,29 +119,26 @@
   // Prompt 內容檔案: oh-my-opencode-slim/{agent}.md (Slim 自動從此目錄載入)
   // 只留 orchestratorPrompt 在此 (用於告訴 orchestrator 何時派遣該 agent)
   "agents": {
-    // Metis: 預規劃顧問 (對應原 OmO 的 metis)
-    // 觸發情境: orchestrator 判斷需求模糊 / 有多種解釋 / 需要釐清 scope
-    "metis": {
+    // 標準編碼者
+    "implementer": {
       "model": "openai/gpt-5.4-mini",
-      "variant": "xhigh",
-      "orchestratorPrompt": "@metis - Pre-planning consultant. Delegate BEFORE any plan writing when: (1) request has multiple valid interpretations, (2) scope is unclear or open-ended, (3) user's stated need may not match their actual goal, (4) task involves high-stakes architectural decisions. Don't use for well-scoped tactical tasks.",
+      "variant": "high",
+      "displayName": "Implementer",
+      "skills": [],
+      "mcps": [],
+      "orchestratorPrompt": "@implementer\n- Role: Medium-scope implementation specialist for focused code changes in one to a few files.\n- **Delegate when:** requirements are clear • there is a concrete plan or bounded scope • the task is a single-feature or medium multi-file production-code implementation • existing patterns can be followed • work is larger than @fixer's tiny edits but does not require architecture-level decisions\n- **Prefer over @fixer when:** bounded production-code implementation is beyond tiny tactical edits. Use @fixer for test-only changes, fixtures, mocks, or very small tactical edits.\n- **Don't delegate when:** requirements are vague or need planning • architecture decisions are required • high-risk refactoring is needed • UI polish is requested • external docs research is required • the task is a <20-line single-file tweak • work is test-only (still use @fixer)",
     },
 
-    // Momus: 計畫批評者 (對應原 OmO 的 momus)
-    // 觸發情境: 計畫已產出但進入執行前, 需要品質把關
-    "momus": {
-      "model": "openai/gpt-5.4-mini",
-      "variant": "xhigh",
-      "orchestratorPrompt": "@momus - Plan reviewer/critic. Delegate AFTER a plan is written but BEFORE execution starts when: (1) the plan is non-trivial (4+ steps or multi-file), (2) the user explicitly requested review, (3) failure cost is high. Momus will return PASS/REVISE/REJECT with specific fixes. Do NOT use for simple tactical tasks.",
+    // QA: 只做可觀測行為驗證 / 回報，非實作
+    "qa": {
+      "model": "github-copilot/gemini-3.1-pro",
+      "variant": "high",
+      "displayName": "QA",
+      "skills": ["agent-browser"],
+      "mcps": [],
+      "orchestratorPrompt": "@qa\n- Role: Read-only QA specialist for runtime/observable behavior validation.\n- **Delegate when:** manual QA • smoke/regression • end-to-end/browser/user workflow validation • bug reproduction evidence.\n- **Don't delegate when:** implementation/fixes • test files/unit tests • code review/static analysis • architecture review • visual design critique.\n- **Output:** PASS / FAIL / BLOCKED with evidence, repro steps, and untested areas.",
     },
 
-    // Prometheus: 規劃專家 (對應原 OmO 的 prometheus)
-    // 觸發情境: 需要產出完整計畫, 特別是需要先 interview 釐清的情境
-    "prometheus": {
-      "model": "openai/gpt-5.4-mini",
-      "variant": "xhigh",
-      "orchestratorPrompt": "@prometheus - Planning specialist. Delegate when: (1) task needs a full plan document (not just a todo list), (2) requirements need interview-style clarification first, (3) plan will be handed off to @momus for review or executed over multiple sessions. Don't use for tasks you can plan inline in 2-3 bullet points.",
-    },
   },
 
   // ─── Todo 自動延續 (取代 OmO 的 todo-continuation-enforcer hook) ──────
@@ -132,16 +173,17 @@
     "default_preset": "default",
     "presets": {
       "default": {
-        "claude": { "model": "anthropic/claude-sonnet-4-6", "variant": "max" },
-        "gpt": { "model": "openai/gpt-5.4-mini", "variant": "xhigh" },
-      },
-      "deep": {
-        "claude": { "model": "anthropic/claude-opus-4-7", "variant": "max" },
-        "gemini": { "model": "opencode/gemini-3.1-pro", "variant": "high" },
-        "gpt": { "model": "openai/gpt-5.4", "variant": "xhigh" },
+        "claude": {
+          "model": "github-copilot/claude-sonnet-4-6",
+          "variant": "max",
+        },
+        "gemini": {
+          "model": "github-copilot/gemini-3.1-pro-preview",
+          "variant": "high",
+        },
+        "gemini": { "model": "kimi-for-coding/k2p6" },
       },
     },
-    "timeout": 180000, // 每個 councillor 3 分鐘上限
   },
 
   // ─── Model Fallback (若 primary 失敗自動降級) ─────────────────────

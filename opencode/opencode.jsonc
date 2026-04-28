@@ -3,23 +3,41 @@
   "plugin": [
     //"oh-my-openagent@latest",
     "oh-my-opencode-slim@latest",
-    "@ex-machina/opencode-anthropic-auth@1.7.5",
+    // "@ex-machina/opencode-anthropic-auth@1.7.5",
     "@slkiser/opencode-quota",
   ],
   "autoupdate": true,
-  "model": "anthropic/claude-sonnet-4-6",
-  "small_model": "openai/gpt-5.4-mini",
+  "model": "kimi-for-coding/k2p6",
+  "small_model": "minimax-coding-plan/MiniMax-M2.1",
   "permission": {
     "bash": {
       "pkill -f *": "deny",
     },
-    // 工作目錄外的檔案存取：預設 "ask"（opencode default），但信任的 temp/cache 路徑直接放行
-    // 其他未列出的外部路徑（如 ~/.ssh, ~/.config/gh/hosts.yml 等敏感目錄）仍維持詢問
+    // 工作目錄外的檔案存取：「家目錄全允許 + 敏感例外」策略
+    // 順序敏感：opencode 採「最後 match 勝出」，deny/ask 例外必須放在 allow 之後
     "external_directory": {
+      // 家目錄與系統 temp：myconfig 管理 dotfile 的主場
+      "~/**": "allow",
       "/tmp/**": "allow",
       "/var/tmp/**": "allow",
-      "~/.cache/**": "allow",
-      "~/.local/state/**": "allow",
+      // 高敏感金鑰類 → deny（外洩無法 revoke 重發）
+      "~/.ssh/id_*": "deny",
+      "~/.ssh/*.pem": "deny",
+      "~/.gnupg/**": "deny",
+      "~/.password-store/**": "deny",
+      "~/.config/sops/**": "deny",
+      // Token / credential 類 → ask（除錯時可手動放行，外洩可 revoke）
+      "~/.aws/credentials*": "ask",
+      "~/.config/gh/hosts.yml": "ask",
+      "~/.config/gcloud/credentials*": "ask",
+      "~/.config/gcloud/legacy_credentials/**": "ask",
+      "~/.netrc": "ask",
+      "~/.pgpass": "ask",
+      "~/.kube/config": "ask",
+      "~/.docker/config.json": "ask",
+      "~/.npmrc": "ask",
+      "~/.pnpmrc": "ask",
+      "~/.yarnrc": "ask",
     },
   },
   "agent": {
@@ -39,11 +57,16 @@
   "formatter": {
     // 全域停用預設 eslint formatter：由 Biome 接管 TS/JS lint+format；
     // 專案如需 eslint 可在自己的 opencode.json 覆蓋為 { "disabled": false, "command": [...] }
-    "eslint": { "disabled": true },
+    "eslint": {
+      "disabled": true
+    },
     // Biome 處理 TS/JS/JSX/TSX/JSON/JSONC/CSS（格式化 + import 排序）
     // Wrapper 邏輯：專案有 biome.json/biome.jsonc 則用專案配置，否則 fallback 全局 myconfig/biome/
     "biome": {
-      "command": ["~/myconfig/formatters/fmt-biome", "$FILE"],
+      "command": [
+        "~/myconfig/formatters/fmt-biome",
+        "$FILE"
+      ],
       "extensions": [
         ".js",
         ".jsx",
@@ -61,7 +84,10 @@
     // Prettier 處理 Biome 不擅長的 SFC 與 markup 格式（Vue/Astro/Svelte/MD/YAML/HTML/SCSS/GraphQL）
     // Wrapper 邏輯：專案有 .prettierrc*/prettier.config.* 則用專案配置（優先用專案 binary）
     "prettier": {
-      "command": ["~/myconfig/formatters/fmt-prettier", "$FILE"],
+      "command": [
+        "~/myconfig/formatters/fmt-prettier",
+        "$FILE"
+      ],
       "extensions": [
         ".vue",
         ".astro",
@@ -82,8 +108,14 @@
     // Ruff 處理 Python（.py/.pyi）
     // Wrapper 邏輯：專案有 ruff.toml / pyproject.toml[tool.ruff] 則用專案配置，否則 fallback 全局
     "ruff": {
-      "command": ["~/myconfig/formatters/fmt-ruff", "$FILE"],
-      "extensions": [".py", ".pyi"],
+      "command": [
+        "~/myconfig/formatters/fmt-ruff",
+        "$FILE"
+      ],
+      "extensions": [
+        ".py",
+        ".pyi"
+      ],
     },
   },
   "mcp": {},
