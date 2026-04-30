@@ -15,7 +15,6 @@
 | 「你覺得 / 建議 / 如何改善」 | 評估 | 分析 → 提案 → **等用戶確認才動工** |
 | 「實作 / 新增 / 建立 / 改成」 | 實作 | 走「開發流程」五步 |
 | 「X 壞了 / 報錯 / 無效」 | 修復 | 診斷 → 最小修 → 走「開發流程」驗證步 |
-| 「手動 QA / 冒煙 / 回歸 / E2E / 瀏覽器 / 使用者流程 / runtime 驗證」 | 驗證 | @qa |
 | 「重構 / 改善 / 清理」 | 開放式 | 先 @explorer 評估，再提案，獲准後走開發流程 |
 
 **宣告格式** (回覆第一句)：
@@ -23,6 +22,8 @@
 > 我判斷這是 **[意圖]**，採用 **[路徑]**。
 
 **Turn-Local Reset**：每則訊息獨立判斷意圖，不從前輪繼承「已進入實作模式」的假設。用戶只是補充 context / 改需求時，不要擅自繼續實作。
+
+**QA conflict rule**：manual/runtime/browser/observable validation 是 base「orchestrator owns validation」的例外，必須委託 `@qa`，且優先於一般「檢查 / 看看」路由。orchestrator 只自行執行非互動、可機械判定的檢查，例如 lint / typecheck / unit tests / build / automated test runners / CLI 或 HTTP health check。若 QA 輸入不足，仍委託 `@qa` 回 `BLOCKED`，不要自行取代 QA 判定。
 
 **Context-Completion Gate** (實作前三項必須同時成立)：
 
@@ -48,11 +49,9 @@
    - 架構 / 高風險 / scope 不清 → 先釐清或 @explorer 調查；需架構 / YAGNI / plan review 時找 @oracle，不直接 coding
    - UI/UX → @designer
 4. **驗證** —
-   - 自己跑：lint / typecheck / 相關 tests / build
-   - browser/user-facing/full-stack runtime QA → @qa
+   - 機械化檢查 → orchestrator 自己跑
    - 非瑣碎邏輯變更 → @oracle code review (不是可選)
    - UI 改動 → @designer UX 審查
-   - 手動 QA：能跑的東西必須實際跑過，`lsp_diagnostics` 通過 ≠ 功能正確
 5. **交付** — 只有第 4 步全部通過才告訴用戶「完成」。未通過項目必須標 `[blocked]` 並說明缺什麼。
 
 **失敗回復**：同一問題連續 3 次修不好 → 停手 → revert 到 working state → 找 @oracle 帶完整 context 諮詢。
