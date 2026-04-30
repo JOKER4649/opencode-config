@@ -34,6 +34,7 @@ LINKS: list[LinkEntry] = [
     LinkEntry("starship/starship.toml", "~/.config/starship.toml"),
     LinkEntry("tmux/tmux.conf", "~/.config/tmux/tmux.conf"),
     LinkEntry("zellij/config.kdl", "~/.config/zellij/config.kdl"),
+    LinkEntry("kitty", "~/.config/kitty"),
     LinkEntry(
         "systemd/opencode-web.service", "~/.config/systemd/user/opencode-web.service"
     ),
@@ -53,6 +54,7 @@ LINKS: list[LinkEntry] = [
         "fcitx5/fcitx5.desktop",
         "~/.config/autostart/fcitx5.desktop",
     ),
+    LinkEntry("worktrunk/config.toml", "~/.config/worktrunk/config.toml"),
 ]
 
 # ============================================================

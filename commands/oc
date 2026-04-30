@@ -96,6 +96,50 @@ _DETECTORS = [
     _from_pyproject_toml,
 ]
 
+def _resolve_git_path(value: str) -> Path:
+    """將 git rev-parse 回傳的路徑轉為絕對路徑（resolved）。
+
+    - 絕對路徑直接 resolve。
+    - 相對路徑以目前 cwd 為基準再 resolve。
+    """
+    path = Path(value)
+    if path.is_absolute():
+        return path.resolve()
+    return (Path.cwd() / path).resolve()
+
+
+def _detect_worktree() -> str | None:
+    """偵測是否為 linked git worktree，若是則回傳 worktree 目錄名稱。
+
+    判斷方式：比對 `git rev-parse --git-dir` 與 `git rev-parse --git-common-dir`。
+    兩者不同時表示為 linked worktree，回傳 git root 目錄名；否則回傳 None。
+    """
+    try:
+        git_dir_result = subprocess.run(
+            ["git", "rev-parse", "--git-dir"],
+            capture_output=True, text=True, check=True,
+        )
+        git_common_dir_result = subprocess.run(
+            ["git", "rev-parse", "--git-common-dir"],
+            capture_output=True, text=True, check=True,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+
+    git_dir = _resolve_git_path(git_dir_result.stdout.strip())
+    git_common_dir = _resolve_git_path(git_common_dir_result.stdout.strip())
+
+    # 兩者相同表示一般 repo，否則為 linked worktree
+    if git_dir == git_common_dir:
+        return None
+
+    root = _git_root()
+    if root is None:
+        return None
+
+    return root.name
+
+
 def detect_project_name() -> str:
     """偵測專案名稱：語言設定檔 → git 根目錄名 → CWD 目錄名。"""
     root = _git_root() or Path.cwd()
@@ -141,8 +185,10 @@ def main() -> None:
         os.execvp("opencode", ["opencode", *sys.argv[1:]])
 
     project = detect_project_name()
+    worktree = _detect_worktree()
+    display_name = f"{project}:{worktree}" if worktree else project
     port = find_available_port()
-    title = f"🔳 {project}"
+    title = f"🔳 {display_name}"
 
     set_terminal_title(title)
     rename_zellij_tab(title)

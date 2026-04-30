@@ -6,12 +6,14 @@
 
 | 目錄 | 說明 |
 |------|------|
+| `commands/`  | 自訂 CLI 命令（Python + typer，透過 mise PATH 注入） |
 | `opencode/` | [OpenCode](https://opencode.ai) AI 編碼助手設定 |
 | `zsh/` | Zsh shell 設定（基於 [Oh My Zsh](https://ohmyz.sh)） |
 | `mise/` | [mise](https://mise.jdx.dev) 開發工具版本管理器設定 |
 | `starship/` | [Starship](https://starship.rs) 跨 shell 提示字元設定 |
 | `tmux/` | [tmux](https://github.com/tmux/tmux) 終端多工器設定 |
 | `zellij/` | [Zellij](https://zellij.dev) 終端多工器設定 |
+| `kitty/` | [kitty](https://sw.kovidgoyal.net/kitty/) GPU 加速終端機設定（Catppuccin Mocha 主題） |
 | `biome/` | [Biome](https://biomejs.dev) 全局 formatter 配置（TS/JS/JSON/CSS） |
 | `prettier/` | [Prettier](https://prettier.io) 全局 formatter 配置 + plugins（Vue/Astro/Svelte/MD/YAML） |
 | `ruff/` | [Ruff](https://docs.astral.sh/ruff/) 全局 Python formatter 配置 |
@@ -20,6 +22,7 @@
 | `systemd/` | systemd user service 設定（opencode-web、portless-proxy 等） |
 | `environment.d/` | systemd user 環境變數（`~/.config/environment.d/`） |
 | `fcitx5/` | [Fcitx5](https://fcitx-im.org) 輸入法 XDG autostart 設定 |
+| `worktrunk/` | [Worktrunk](https://worktrunk.dev) git worktree 管理工具設定 |
 
 ## Formatter 架構
 

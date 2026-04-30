@@ -29,6 +29,7 @@ bat = "latest"
 "pipx:numpy" = "latest"
 act = "latest"
 codex = "latest"
+worktrunk = "latest"
 
 [settings]
 npm.package_manager = "bun"
@@ -38,4 +39,4 @@ python.uv_venv_auto = true
 # dir = "tasks"
 
 [tasks.commit]
-run = "opencode run -m opencode-go/minimax-m2.7 '對當前變更進行分組提交'"
+run = "opencode run -m minimax-coding-plan/MiniMax-M2.7 '提交當前變更, 如果必要, 進行分組'"

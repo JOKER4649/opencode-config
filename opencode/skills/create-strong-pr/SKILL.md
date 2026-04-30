@@ -7,7 +7,7 @@ description: 建立 `review ready` 的健壯 PR
 
 - 當前分支應為 `feat/[plan_name]` 或 `fix/[plan_name]` 之類的獨特名稱, 而不是 `main` 或 `master`
 - PR title, PR body 以繁體中文書寫
-- PR body 應描述意圖, 這完成了什麼功能/解決了什麼問題...等, 而不是解釋做了什麼
+- PR 應說明這完成了什麼功能/解決了什麼問題...等, 而不是解釋做了什麼
 - push 前在本地完成了檢查, 盡可能的減少 github actions 的負擔
 
 ## AI PR review
@@ -15,13 +15,17 @@ description: 建立 `review ready` 的健壯 PR
 組織內使用 `gemini-code-assist` (免費版)
 
 - 當 **專案位於 gitlab**, 忽略 `gemini-code-assist` 相關流程 (gitlab 不支持)
-- `gemini-code-assist` 第一次 review 需要數分鐘, 建立 PR 後使用 `sleep` 來等待 `review`, 依照變更程式碼量, 第一次 sleep 建議 120~300 秒
+- `gemini-code-assist` 第一次 review 需要數分鐘, 建立 PR 後使用本 SKILL 的 `wait.py` 輪詢等待 (見下方「工具」), **不要**用 `sleep` 猜等待時間
 - **不應**盲信 `AI PR review` 評論, 由於缺少任務的完整上下文, 應拒絕不合實際情況的評論
 - 修復明確的 bug 與設計問題, 簡單的改良建議直接採用, 複雜的改良建議建立 issue 來追蹤, 如果需要決策向用戶確認
 
 ## 工具
 
 - 使用 `act` 模擬 `github actions`, 減少 github actions 的負擔
+- 使用 `~/myconfig/opencode/skills/create-strong-pr/wait.py` 輪詢等待 CI 完成與 gemini review 出現
+  - 預設每 30 秒輪詢一次, 15 分鐘 timeout; 依賴 `gh`, 僅支援 GitHub
+  - GitHub repo 未裝 gemini 時加 `--no-gemini`
+  - 退出碼: `0`=CI 通過+review 已到, `1`=CI 有失敗, `2`=超時, `3`=gh 錯誤
 - 使用 `pr-review-thread_list` 列出 PR 的所有 review threads (含 thread ID 與狀態)
 - 使用 `pr-review-thread_resolve` 解決 review thread (需提供 thread ID)
 - 使用 `pr-review-thread_unresolve` 反向操作

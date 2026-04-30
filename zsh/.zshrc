@@ -139,3 +139,5 @@ export OPENCODE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT=true
 
 # oh-my-openagent: 讓 Anthropic 模型使用 1M context limit（避免誤判為 200K）
 export ANTHROPIC_1M_CONTEXT=true
+
+if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi

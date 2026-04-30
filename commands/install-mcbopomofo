@@ -287,6 +287,100 @@ def reload_fcitx5() -> None:
         print(f"  ⚠ fcitx5-remote -r 失敗: {r.stderr.strip() or r.stdout.strip()}")
 
 
+def _is_root() -> bool:
+    """是否以 root 身份執行（UID == 0）"""
+    return os.geteuid() == 0
+
+
+# ---- Fedora GNOME/X11 自動啟動 + 環境變數 ----
+
+
+def setup_fcitx5_autostart() -> None:
+    """確保 ~/.config/autostart 有 fcitx5 的 desktop entry（idempotent）"""
+    if _is_root():
+        print("  ⚠ 以 root 執行，寫入至 /root/.config/ 可能有風險")
+
+    user_autostart_dir = Path.home() / ".config" / "autostart"
+    user_autostart_dir.mkdir(parents=True, exist_ok=True)
+    # 統一使用與系統一致的檔名，避免重複 entry
+    user_desktop_file = user_autostart_dir / "org.fcitx.Fcitx5.desktop"
+
+    # 若 user 已有自訂檔，跳過（不覆蓋）
+    if user_desktop_file.exists():
+        print("  ✓ user autostart 已有 fcitx5 desktop entry，跳過")
+        return
+
+    # 檢查系統是否已有 desktop entry
+    system_desktop = Path("/usr/share/applications/org.fcitx.Fcitx5.desktop")
+    if system_desktop.exists():
+        user_desktop_file.write_text(system_desktop.read_text())
+        print("  ✓ 已複製系統 fcitx5 desktop entry 至 user autostart")
+        return
+
+    # Fallback：建立最簡 desktop entry
+    fallback_content = """\
+[Desktop Entry]
+Type=Application
+Name=Fcitx 5
+Comment=fcitx5 輸入法
+Exec=fcitx5 -d
+Icon=fcitx5
+Terminal=false
+Categories=System;InputMethod;
+X-GNOME-Autostart-enabled=true
+"""
+    user_desktop_file.write_text(fallback_content)
+    print("  ✓ 已建立 fcitx5 autostart desktop entry（fallback）")
+
+
+def setup_fcitx5_env() -> None:
+    """確保 ~/.config/environment.d/00-fcitx5.conf 包含必要的輸入法環境變數（idempotent）"""
+    if _is_root():
+        print("  ⚠ 以 root 執行，寫入至 /root/.config/ 可能有風險")
+
+    env_dir = Path.home() / ".config" / "environment.d"
+    env_dir.mkdir(parents=True, exist_ok=True)
+    env_file = env_dir / "00-fcitx5.conf"
+
+    env_keys = {
+        "GTK_IM_MODULE": "fcitx",
+        "QT_IM_MODULE": "fcitx",
+        "XMODIFIERS": "@im=fcitx",
+        "SDL_IM_MODULE": "fcitx",
+    }
+
+    result_lines: list[str] = []
+    inserted_keys: set[str] = set()
+
+    if env_file.exists():
+        for line in env_file.read_text().splitlines():
+            stripped = line.strip()
+            # 保留空行與註解
+            if not stripped or stripped.startswith("#"):
+                result_lines.append(line)
+                continue
+            if "=" not in stripped:
+                result_lines.append(line)
+                continue
+            # 正常化 key（去除兩側空白再比對），支援 "KEY = value" 格式
+            key = stripped.split("=", 1)[0].strip()
+            if key in env_keys:
+                # 原地替換成標準化的 key=value（無多餘空白）
+                result_lines.append(f"{key}={env_keys[key]}")
+                inserted_keys.add(key)
+            else:
+                result_lines.append(line)
+
+    # 缺少的 key 追加到結尾
+    for k, v in env_keys.items():
+        if k not in inserted_keys:
+            result_lines.append(f"{k}={v}")
+
+    env_file.write_text("\n".join(result_lines) + "\n")
+    print("  ✓ 已更新 environment.d/00-fcitx5.conf")
+    print("    → 需登出再登入（或重開機）後環境變數才會生效")
+
+
 def save_version(version: str) -> None:
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     VERSION_FILE.write_text(version)
@@ -330,13 +424,20 @@ def main(
     latest = get_latest_version()
     print(f"最新版本: {latest}")
 
-    if current == latest and not force:
-        print("\n✓ 已經是最新版本")
-        raise typer.Exit()
-
     if check:
         if current != latest:
             print(f"\n有新版本可用: {current or '未安裝'} → {latest}")
+        raise typer.Exit()
+
+    # 確保 fcitx5 自動啟動與環境變數設定（idempotent，即便已是最最新版也執行）
+    print("\n設定 fcitx5 自動啟動...")
+    setup_fcitx5_autostart()
+
+    print("\n設定輸入法環境變數...")
+    setup_fcitx5_env()
+
+    if current == latest and not force:
+        print("\n✓ 已經是最新版本")
         raise typer.Exit()
 
     # ---- build deps ----
@@ -379,12 +480,12 @@ def main(
 
     print(f"\n✓ 小麥注音 {latest} 安裝成功!")
     if current is None:
-        print("\n[首次安裝] 下一步:")
-        print("  1. 開啟 fcitx5 設定工具:  fcitx5-configtool")
-        print("  2. 在「輸入法」頁籤新增「小麥注音 (McBopomofo)」")
-        print("  3. 若選單未更新,完整重啟 fcitx5:")
-        print("       systemctl --user restart fcitx5   # 若為 systemd user unit")
-        print("       或  pkill fcitx5 && fcitx5 -d &")
+        print("\n[首次安裝] 設定已完成:")
+        print("  1. fcitx5 已設定為登入自動啟動")
+        print("  2. 輸入法環境變數已寫入 ~/.config/environment.d/00-fcitx5.conf")
+        print("  ★ 請「登出再登入」（或重開機）讓環境變數生效")
+        print("  3. 登入後執行:  fcitx5-configtool")
+        print("  4. 在「輸入法」頁籤新增「小麥注音 (McBopomofo)」")
     else:
         print("\n若切換輸入法後仍是舊版,請完整重啟 fcitx5:")
         print("  systemctl --user restart fcitx5   # 或 pkill fcitx5 && fcitx5 -d &")

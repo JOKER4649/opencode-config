@@ -390,12 +390,13 @@ default_mode "normal"
 // that will be used by default if this option is not set.
 // Examples:
 //
-// copy_command "xclip -selection clipboard" // x11
-// copy_command "wl-copy"                    // wayland
-// copy_command "pbcopy"                     // osx
-// Fedora GNOME Terminal (VTE) 預設禁用 OSC 52 剪貼簿支援,
-// 改用 wl-copy 繞過限制 (Wayland 環境)
-copy_command "wl-copy"
+// 不設 copy_command → Zellij 自動用 OSC 52 escape sequence,
+// 由外層終端接收並寫入系統剪貼簿。本地與 SSH 皆透過同一條路徑。
+// 要求: 外層終端支援 OSC 52 (kitty / Alacritty / WezTerm / Ghostty OK;
+//       GNOME Terminal / VTE 不支援，若改用 VTE 系終端需改回 copy_command)
+// copy_command "xclip -selection clipboard" // x11 fallback
+// copy_command "wl-copy"                    // wayland fallback
+// copy_command "pbcopy"                     // osx fallback
  
 // Choose the destination for copied text
 // Allows using the primary selection buffer (on x11/wayland) instead of the system clipboard.
