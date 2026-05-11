@@ -27,7 +27,7 @@
       },
       // Oracle = 原本的 oracle (深度推理 / code review)
       "oracle": {
-        "model": "openai/gpt-5.5",
+        "model": "github-copilot/gemini-3.1-pro-preview",
         "variant": "high",
         "skills": ["*"],
       },

@@ -4,6 +4,7 @@
     //"oh-my-openagent@latest",
     "oh-my-opencode-slim@latest",
     // "@ex-machina/opencode-anthropic-auth@1.7.5",
+    "opencode-zellij@0.0.9",
     "@slkiser/opencode-quota",
   ],
   "autoupdate": true,

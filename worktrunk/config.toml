@@ -13,6 +13,9 @@
 # 注意: TOML 規則 — top-level inline key (e.g. `pre-start = "..."`) 必須寫在
 # 所有 [section] 之前, 否則會被解析為前一個 section 的 sub-key。
 # 因此排序為: inline hooks → [post-switch] → [aliases] → ...
+ 
+# 將每個專案的 worktree 放在 repo 內，便於集中管理與清理。
+worktree-path = "{{ repo_path }}/.worktrees/{{ branch | sanitize }}"
 
 # ─── pre-start: 新 worktree 自動 mise trust + install ───────────────────────
 #
@@ -71,26 +74,45 @@ go = "wt switch --create --execute opencode {{ args }}"
 cont = "wt switch --execute 'opencode -c' {{ args }}"
 task = "wt switch --create --execute 'opencode run' {{ args }}"
 
+[commit]
+# `wt step commit`、`wt step squash`、`wt merge` 提交前自動 stage 全部變更。
+stage = "all"
+
+[merge]
+# AI-assisted branch 通常是短生命週期任務分支，預設 squash 成乾淨 commit。
+squash = true
+
+# 合併前先提交 worktree 內尚未提交的變更。
+commit = true
+
+# 合併前先 rebase 到目標分支，降低 merge commit 與衝突雜訊。
+rebase = true
+
+# 合併完成後移除 worktree。
+remove = true
+
+# 保留專案 hooks / verify，避免未檢查的變更進主線。
+verify = true
+
+# 可快轉時使用 fast-forward。
+ff = true
+
+[switch]
+# `wt switch` 後切換 shell 目錄到目標 worktree。
+cd = true
+
+[step.copy-ignored]
+# `wt step copy-ignored` 額外排除大型或可重建的工具快取。
+exclude = [
+  ".cache/",
+  ".turbo/",
+  "node_modules/",
+]
+
 
 # ┌──────────────────────────────────────────────────────────────────────────┐
 # │  PART 2 — Recipe 收藏架 (取消註解即啟用)                                 │
 # └──────────────────────────────────────────────────────────────────────────┘
-
-# ─── 新 worktree 額外安裝依賴 (mise 已在 PART 1 啟用) ───────────────────────
-#
-# 多數專案的工具版本由 mise 管 (PART 1 已自動 install)。
-# 若還有 mise 不管的依賴 (如 bun install 拉 node_modules):
-#
-# 一個原則: 通用 hook (mise) 寫 user config; 專案特定 deps 寫 project config。
-# 因此 bun install 之類建議寫到該 repo 的 .config/wt.toml [pre-start]:
-#
-#   # repo/.config/wt.toml
-#   [pre-start]
-#   deps = "bun install"
-#
-# Worktrunk 會把 user pre-start (mise) 跟 project pre-start (deps) 合併執行,
-# user 先、project 後。同名才會被覆蓋, 不同名則並存。
-
 
 # ─── 從 main worktree 複製 gitignored 檔案 ──────────────────────────────────
 #
@@ -111,27 +133,6 @@ task = "wt switch --create --execute 'opencode run' {{ args }}"
 # [post-remove]
 # stop = "pkill -f 'port {{ branch | hash_port }}' || true"
 
-
-# ─── Pre-commit 把關 (僅在 wt merge 觸發) ───────────────────────────────────
-#
-# pre-commit 在 `wt merge` 的 squash commit 之前執行。
-# 走 GitHub PR 流程 (不用 wt merge) 時 → 永遠不會觸發。
-# 想在每次 commit 把關 → 改用 git 的 pre-commit hook (lefthook / husky)。
-#
-# [pre-commit]
-# lint = "bun run lint"
-# typecheck = "bun run typecheck"
-
-
-# ─── LLM 自動寫 commit message ──────────────────────────────────────────────
-#
-# 給 `wt step commit` / `wt merge` 用, 從 diff 生成 commit message。
-# 若你已習慣在 opencode TUI 內手寫 commit, 不需要啟用。
-#
-# [commit.generation]
-# command = "opencode run -m anthropic/claude-haiku-4.5 --variant fast"
-
-
 # ─── 個別專案覆寫 ──────────────────────────────────────────────────────────
 #
 # 想與團隊共享的設定 → 寫到專案內的 .config/wt.toml。
@@ -141,96 +142,6 @@ task = "wt switch --create --execute 'opencode run' {{ args }}"
 # pre-start = "mise install && bun install"
 
 
-# ╔══════════════════════════════════════════════════════════════════════════╗
-# ║  PART 3 — Worktrunk 完整設定參考 (官方 boilerplate, 偶爾查閱用)          ║
-# ║                                                                          ║
-# ║  以下皆為註解。要啟用任一段, 複製到 PART 1 並取消註解。                  ║
-# ╚══════════════════════════════════════════════════════════════════════════╝
-
-
-# ════ Worktree 路徑樣板 ═════════════════════════════════════════════════════
-#
-# 控制新 worktree 建立在哪裡。
-#
-# 可用變數:
-#   {{ repo_path }}              repo 根目錄絕對路徑
-#   {{ repo }}                   repo 目錄名 (e.g. `myproject`)
-#   {{ owner }}                  remote owner 路徑 (可能含子群組)
-#   {{ branch }}                 原始 branch 名 (e.g. `feature/auth`)
-#   {{ branch | sanitize }}      檔案系統安全: / 與 \ 替換成 -
-#   {{ branch | sanitize_db }}   DB 安全: 小寫底線 + hash 後綴
-#
-# 範例 (repo `~/code/myproject`、branch `feature/auth`):
-#
-#   # 預設 — sibling 目錄 (~/code/myproject.feature-auth)
-#   worktree-path = "{{ repo_path }}/../{{ repo }}.{{ branch | sanitize }}"
-#
-#   # 放在 repo 內 (~/code/myproject/.worktrees/feature-auth)
-#   worktree-path = "{{ repo_path }}/.worktrees/{{ branch | sanitize }}"
-#
-#   # 集中管理 (~/worktrees/myproject/feature-auth)
-#   worktree-path = "~/worktrees/{{ repo }}/{{ branch | sanitize }}"
-#
-#   # 依 owner (~/development/max-sixty/myproject/feature/auth)
-#   worktree-path = "~/development/{{ owner }}/{{ repo }}/{{ branch }}"
-#
-# `~` 展開為家目錄。相對路徑以 repo_path 為基準。
-
-
-# ════ LLM Commit Message Providers ══════════════════════════════════════════
-#
-# Merge 時自動生成 commit message。挑一個 provider:
-#
-#   # Claude Code
-#   [commit.generation]
-#   command = "CLAUDECODE= MAX_THINKING_TOKENS=0 claude -p --no-session-persistence --model=haiku --tools='' --disable-slash-commands --setting-sources='' --system-prompt=''"
-#
-#   # Codex
-#   [commit.generation]
-#   command = "codex exec -m gpt-5.1-codex-mini -c model_reasoning_effort='low' -c system_prompt='' --sandbox=read-only --json - | jq -sr '[.[] | select(.item.type? == \"agent_message\")] | last.item.text'"
-#
-#   # OpenCode
-#   [commit.generation]
-#   command = "opencode run -m anthropic/claude-haiku-4.5 --variant fast"
-#
-#   # llm
-#   [commit.generation]
-#   command = "llm -m claude-haiku-4.5"
-#
-#   # aichat
-#   [commit.generation]
-#   command = "aichat -m claude:claude-haiku-4.5"
-#
-# 詳細設定: https://worktrunk.dev/llm-commits/
-
-
-# ════ 命令設定 ══════════════════════════════════════════════════════════════
-#
-# ─── wt list ────────────────────────────────────────────────────────────────
-#
-# [list]
-# summary = false        # LLM branch 摘要 (需先設 [commit.generation])
-# full = false           # CI + diffstat + LLM 摘要 (--full)
-# branches = false       # 含無 worktree 的 branch (--branches)
-# remotes = false        # 含 remote-only branch (--remotes)
-# task-timeout-ms = 0    # 單一 git 命令逾時 (ms); 0 停用
-# timeout-ms = 0         # collect 階段總預算 (ms); 0 停用
-#
-# ─── wt step commit / squash / merge ────────────────────────────────────────
-#
-# [commit]
-# stage = "all"          # commit 前 stage 範圍: "all" / "tracked" / "none"
-#
-# ─── wt merge ───────────────────────────────────────────────────────────────
-#
-# [merge]
-# squash = true          # 壓成一個 commit (--no-squash 保留歷史)
-# commit = true          # 先 commit 未提交變更 (--no-commit 跳過)
-# rebase = true          # merge 前 rebase (--no-rebase 跳過)
-# remove = true          # merge 後移除 worktree (--no-remove 保留)
-# verify = true          # 跑 project hooks (--no-hooks 跳過)
-# ff = true              # Fast-forward (--no-ff 改建 merge commit)
-#
 # ─── wt switch ──────────────────────────────────────────────────────────────
 #
 # [switch]
@@ -238,27 +149,6 @@ task = "wt switch --create --execute 'opencode run' {{ args }}"
 #
 # [switch.picker]
 # pager = "delta --paging=never"   # 覆寫 git core.pager 用於 diff 預覽
-#
-# ─── wt step copy-ignored ───────────────────────────────────────────────────
-#
-# [step.copy-ignored]
-# exclude = []           # 額外排除 (e.g. [".cache/", ".turbo/"])
-#
-# 內建排除永遠生效:
-#   VCS metadata: .bzr/  .hg/  .jj/  .pijul/  .sl/  .svn/
-#   工具狀態:     .conductor/  .entire/  .pi/  .worktrees/
-
-
-# ════ Aliases (別名) ════════════════════════════════════════════════════════
-#
-# 命令樣板, 以 `wt <name>` 形式執行。
-#
-# [aliases]
-# greet = "echo Hello from {{ branch }}"
-# url = "echo http://localhost:{{ branch | hash_port }}"
-#
-# 全域 alias 套用到所有 project; 專案特定請改寫到 project config。
-# 詳細用法: https://worktrunk.dev/extending/#aliases
 
 
 # ════ 使用者層級的專案特定設定 ══════════════════════════════════════════════
