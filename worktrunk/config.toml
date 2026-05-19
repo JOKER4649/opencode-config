@@ -70,7 +70,7 @@ pull-default = "{% if branch == default_branch %}git pull --ff-only{% endif %}"
 #     `wt task feat/x -- "fix bug"` ≡ `... opencode run feat/x "fix bug"`
 
 [aliases]
-go = "wt switch --create --execute opencode {{ args }}"
+go = "wt switch --create {{ args }}"
 cont = "wt switch --execute 'opencode -c' {{ args }}"
 task = "wt switch --create --execute 'opencode run' {{ args }}"
 
